@@ -1,12 +1,12 @@
-import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/utils/profile_photo_picker.dart';
+import '../../../../core/widgets/a11y.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../../../core/widgets/profile_avatar.dart';
-import 'edit_info_screen.dart';
+import 'Edit_info_screen.dart';
 
 class PersonalInfoScreen extends StatefulWidget {
   const PersonalInfoScreen({super.key});
@@ -16,36 +16,34 @@ class PersonalInfoScreen extends StatefulWidget {
 }
 
 class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
-  final _picker = ImagePicker();
   bool _uploadingPhoto = false;
 
   Future<void> _pickAndUploadPhoto() async {
-    final picked = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
-    if (picked == null || !mounted) return;
-
-    setState(() => _uploadingPhoto = true);
-    final ok = await context.read<AuthProvider>().uploadProfilePhoto(
-      File(picked.path),
-    );
-    if (!mounted) return;
-    setState(() => _uploadingPhoto = false);
-
     final t = AppLocalizations.of(context)!;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(ok ? t.savedSuccessfully : 'Failed to upload photo'),
-        backgroundColor: ok ? Colors.green : Colors.red,
-      ),
+    await showProfilePhotoSourceSheet(
+      context,
+      cameraLabel: t.camera,
+      galleryLabel: t.gallery,
+      onPicked: (file) async {
+        setState(() => _uploadingPhoto = true);
+        final ok = await context.read<AuthProvider>().uploadProfilePhoto(file);
+        if (!mounted) return;
+        setState(() => _uploadingPhoto = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ok ? t.savedSuccessfully : t.failedToUploadPhoto),
+            backgroundColor: ok ? Colors.green : Colors.red,
+          ),
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final local = AppLocalizations.of(context)!;
-    final user = context.watch<AuthProvider>().passenger;
+    final auth = context.watch<AuthProvider>();
+    final user = auth.passenger;
 
     final firstName = user?.firstName ?? local.guest;
     final lastName = user?.lastName ?? '';
@@ -55,7 +53,9 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     final home = user?.homeAddress ?? '—';
     final work = user?.workAddress ?? '—';
 
-    return Scaffold(
+    return A11yScreen(
+      label: local.personalInfo,
+      child: Scaffold(
       backgroundColor: const Color(0xfff7f7f7),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: Colors.black,
@@ -74,7 +74,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
       ),
 
       appBar: AppBar(
-        title: Text(local.personalInfo),
+        title: Semantics(header: true, child: Text(local.personalInfo)),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.white,
@@ -112,6 +112,8 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                         children: [
                           ProfileAvatar(
                             imageUrl: user?.profileImageUrl,
+                            localPreviewPath: auth.localProfilePreview,
+                            onNetworkImageLoaded: auth.clearLocalProfilePreview,
                             name: '$firstName $lastName'.trim(),
                             radius: 42,
                             showCameraBadge: true,
@@ -167,6 +169,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 

@@ -73,7 +73,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '420049372283',
     projectId: 'nova-ride-production',
     storageBucket: 'nova-ride-production.firebasestorage.app',
-    iosBundleId: 'com.example.novarideRider',
+    iosBundleId: 'com.novaride.rider',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

@@ -8,6 +8,7 @@ import '../constants/api_constants.dart';
 import '../navigation/app_navigator.dart';
 import 'notification_inbox_service.dart';
 import '../../features/rider/account/familyprofile/familyprofile_screen.dart';
+import '../../features/rider/split_fare/split_fare_invites_screen.dart';
 
 class RiderFcmService {
   RiderFcmService._();
@@ -108,7 +109,25 @@ class RiderFcmService {
 
     if (type == 'FAMILY_INVITE' || type == 'FAMILY_ACCEPT') {
       _openFamilyProfile();
+      return;
     }
+
+    if (type == 'SPLIT_FARE_INVITE'
+        || type == 'SPLIT_FARE_PAY'
+        || type == 'SPLIT_FARE_ACCEPTED'
+        || type == 'SPLIT_FARE_DECLINED'
+        || type == 'SPLIT_FARE_PAID') {
+      _openSplitFareInvites();
+      if (rideId != null) onRideUpdate?.call('refresh', rideId);
+    }
+  }
+
+  void _openSplitFareInvites() {
+    final nav = appNavigatorKey.currentState;
+    if (nav == null) return;
+    nav.push(
+      MaterialPageRoute(builder: (_) => const SplitFareInvitesScreen()),
+    );
   }
 
   void _openFamilyProfile() {

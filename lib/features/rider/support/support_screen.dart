@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/support_constants.dart';
+import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
 import '../chat/ride_chat_screen.dart';
 import 'complaints_service.dart';
@@ -102,8 +103,13 @@ class _SupportScreenState extends State<SupportScreen> {
     final local = AppLocalizations.of(context)!;
 
     if (_sent) {
-      return Scaffold(
-        appBar: AppBar(title: Text(local.support), centerTitle: true),
+      return A11yScreen(
+        label: local.complaintSuccessTitle,
+        child: Scaffold(
+        appBar: AppBar(
+          title: Semantics(header: true, child: Text(local.support)),
+          centerTitle: true,
+        ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -137,30 +143,36 @@ class _SupportScreenState extends State<SupportScreen> {
                   style: TextStyle(color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                A11yButton(
+                  label: local.complaintOk,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    local.complaintOk,
-                    style: const TextStyle(color: Colors.white),
+                    child: Text(
+                      local.complaintOk,
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
         ),
+      ),
       );
     }
 
-    return Scaffold(
+    return A11yScreen(
+      label: local.support,
+      child: Scaffold(
       backgroundColor: const Color(0xfff6f7fb),
       appBar: AppBar(
-        title: Text(local.support),
+        title: Semantics(header: true, child: Text(local.support)),
         centerTitle: true,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -296,51 +308,59 @@ class _SupportScreenState extends State<SupportScreen> {
                   BoxShadow(color: Colors.black12, blurRadius: 6),
                 ],
               ),
-              child: TextField(
-                controller: _descCtrl,
-                maxLines: 5,
-                decoration: InputDecoration(
-                  hintText: local.complaintDescHint,
-                  hintStyle: TextStyle(color: Colors.grey[400]),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
+              child: A11yTextField(
+                label: local.complaintDescTitle,
+                hint: local.complaintDescHint,
+                child: TextField(
+                  controller: _descCtrl,
+                  maxLines: 5,
+                  decoration: InputDecoration(
+                    hintText: local.complaintDescHint,
+                    hintStyle: TextStyle(color: Colors.grey[400]),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.all(16),
                   ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.all(16),
                 ),
               ),
             ),
             const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: _loading ? null : _submitComplaint,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+            A11yButton(
+              label: local.complaintSubmit,
+              enabled: !_loading,
+              child: SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: _loading ? null : _submitComplaint,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
+                  child: _loading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          local.complaintSubmit,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
                 ),
-                child: _loading
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Text(
-                        local.complaintSubmit,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
               ),
             ),
             const SizedBox(height: 32),
@@ -355,6 +375,7 @@ class _SupportScreenState extends State<SupportScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 

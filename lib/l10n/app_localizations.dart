@@ -167,6 +167,36 @@ abstract class AppLocalizations {
   /// **'Resend code'**
   String get resend;
 
+  /// No description provided for @resendIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend ({seconds})'**
+  String resendIn(int seconds);
+
+  /// No description provided for @noInternetConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection'**
+  String get noInternetConnection;
+
+  /// No description provided for @failedToSendOtp.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send verification code'**
+  String get failedToSendOtp;
+
+  /// No description provided for @invalidResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid server response'**
+  String get invalidResponse;
+
+  /// No description provided for @failedToUpdateProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update profile'**
+  String get failedToUpdateProfile;
+
   /// No description provided for @otpError.
   ///
   /// In en, this message translates to:
@@ -2135,6 +2165,24 @@ abstract class AppLocalizations {
   /// **'Track trips from start to finish.'**
   String get inviteAdultsFeature3Desc;
 
+  /// No description provided for @inviteAdultsFeature4.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay in touch'**
+  String get inviteAdultsFeature4;
+
+  /// No description provided for @inviteAdultsFeature4Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect with family members anytime.'**
+  String get inviteAdultsFeature4Desc;
+
+  /// No description provided for @inviteAdultsButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite adults'**
+  String get inviteAdultsButton;
+
   /// No description provided for @inviteTeenAdults.
   ///
   /// In en, this message translates to:
@@ -2798,7 +2846,7 @@ abstract class AppLocalizations {
   /// No description provided for @notificationsEmpty.
   ///
   /// In en, this message translates to:
-  /// **'No notifications yet'**
+  /// **'No notifications'**
   String get notificationsEmpty;
 
   /// No description provided for @markAllRead.
@@ -2848,6 +2896,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ride Scheduled! 🎉'**
   String get rideScheduled;
+
+  /// No description provided for @rideIdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride #{id}'**
+  String rideIdLabel(int id);
 
   /// No description provided for @yourdriver.
   ///
@@ -2993,6 +3047,24 @@ abstract class AppLocalizations {
   /// **'Cancel ride'**
   String get cancelRideAction;
 
+  /// No description provided for @rescheduleRideAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Change time'**
+  String get rescheduleRideAction;
+
+  /// No description provided for @rescheduleRideSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride time updated'**
+  String get rescheduleRideSuccess;
+
+  /// No description provided for @scheduleMinLeadTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup must be at least 30 minutes from now'**
+  String get scheduleMinLeadTime;
+
   /// No description provided for @cancelling.
   ///
   /// In en, this message translates to:
@@ -3118,6 +3190,1014 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Demand map'**
   String get viewSurgeMap;
+
+  /// No description provided for @accessibleRide.
+  ///
+  /// In en, this message translates to:
+  /// **'Accessible'**
+  String get accessibleRide;
+
+  /// No description provided for @vehicleTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle type'**
+  String get vehicleTypeLabel;
+
+  /// No description provided for @paymentMethodLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment method'**
+  String get paymentMethodLabel;
+
+  /// No description provided for @cashPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get cashPayment;
+
+  /// No description provided for @shamCashPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Sham Cash'**
+  String get shamCashPayment;
+
+  /// No description provided for @ratingTagsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What went well?'**
+  String get ratingTagsTitle;
+
+  /// No description provided for @ratingCommentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a comment (optional)'**
+  String get ratingCommentHint;
+
+  /// No description provided for @ratingTagClean.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean car'**
+  String get ratingTagClean;
+
+  /// No description provided for @ratingTagFriendly.
+  ///
+  /// In en, this message translates to:
+  /// **'Friendly'**
+  String get ratingTagFriendly;
+
+  /// No description provided for @ratingTagOnTime.
+  ///
+  /// In en, this message translates to:
+  /// **'On time'**
+  String get ratingTagOnTime;
+
+  /// No description provided for @ratingTagSafe.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe driving'**
+  String get ratingTagSafe;
+
+  /// No description provided for @ratingTagNavigation.
+  ///
+  /// In en, this message translates to:
+  /// **'Good route'**
+  String get ratingTagNavigation;
+
+  /// No description provided for @ratingTagProfessional.
+  ///
+  /// In en, this message translates to:
+  /// **'Professional'**
+  String get ratingTagProfessional;
+
+  /// No description provided for @tipTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a tip for your driver'**
+  String get tipTitle;
+
+  /// No description provided for @tipNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No tip'**
+  String get tipNone;
+
+  /// No description provided for @submitRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit rating'**
+  String get submitRating;
+
+  /// No description provided for @ratingStarsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Star rating'**
+  String get ratingStarsLabel;
+
+  /// No description provided for @addSavedPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Add saved place'**
+  String get addSavedPlace;
+
+  /// No description provided for @placeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Place name'**
+  String get placeLabel;
+
+  /// No description provided for @placeAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get placeAddress;
+
+  /// No description provided for @latitude.
+  ///
+  /// In en, this message translates to:
+  /// **'Latitude'**
+  String get latitude;
+
+  /// No description provided for @longitude.
+  ///
+  /// In en, this message translates to:
+  /// **'Longitude'**
+  String get longitude;
+
+  /// No description provided for @noSavedPlaces.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved places yet'**
+  String get noSavedPlaces;
+
+  /// No description provided for @multiStopTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add stops'**
+  String get multiStopTitle;
+
+  /// No description provided for @addStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Add stop'**
+  String get addStop;
+
+  /// No description provided for @removeStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get removeStop;
+
+  /// No description provided for @splitFareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Split fare'**
+  String get splitFareTitle;
+
+  /// No description provided for @splitFareHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Friend pays their share via app invite'**
+  String get splitFareHint;
+
+  /// No description provided for @splitFarePhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Friend\'s phone number'**
+  String get splitFarePhone;
+
+  /// No description provided for @splitFarePercent.
+  ///
+  /// In en, this message translates to:
+  /// **'Their share (%)'**
+  String get splitFarePercent;
+
+  /// No description provided for @splitFareInvitesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Split fare invites'**
+  String get splitFareInvitesTitle;
+
+  /// No description provided for @splitFareInvitesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No split fare invites'**
+  String get splitFareInvitesEmpty;
+
+  /// No description provided for @splitFareAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get splitFareAccept;
+
+  /// No description provided for @splitFareDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get splitFareDecline;
+
+  /// No description provided for @splitFareAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Split fare accepted'**
+  String get splitFareAccepted;
+
+  /// No description provided for @splitFareAcceptedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'You accepted this split'**
+  String get splitFareAcceptedStatus;
+
+  /// No description provided for @splitFareYourShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Your share'**
+  String get splitFareYourShare;
+
+  /// No description provided for @splitFarePayShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay my share'**
+  String get splitFarePayShare;
+
+  /// No description provided for @splitFareFriendInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Split fare invite'**
+  String get splitFareFriendInvite;
+
+  /// No description provided for @splitFareInviteSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite sent to your friend'**
+  String get splitFareInviteSent;
+
+  /// No description provided for @splitFarePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for friend to accept'**
+  String get splitFarePending;
+
+  /// No description provided for @splitFarePrimaryShare.
+  ///
+  /// In en, this message translates to:
+  /// **'You pay'**
+  String get splitFarePrimaryShare;
+
+  /// No description provided for @promoActivated.
+  ///
+  /// In en, this message translates to:
+  /// **'Activated {code} — {percent}% off'**
+  String promoActivated(String code, String percent);
+
+  /// No description provided for @promoActiveNextRide.
+  ///
+  /// In en, this message translates to:
+  /// **'Active for your next ride'**
+  String get promoActiveNextRide;
+
+  /// No description provided for @promoApplyCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply code'**
+  String get promoApplyCode;
+
+  /// No description provided for @promoTapToActivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to activate'**
+  String get promoTapToActivate;
+
+  /// No description provided for @promoMinFare.
+  ///
+  /// In en, this message translates to:
+  /// **'Min. fare {amount}'**
+  String promoMinFare(String amount);
+
+  /// No description provided for @promoValidUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Until {date}'**
+  String promoValidUntil(String date);
+
+  /// No description provided for @promoPullRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull down to refresh'**
+  String get promoPullRefresh;
+
+  /// No description provided for @promoActivatedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get promoActivatedBadge;
+
+  /// No description provided for @confirmRide.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm ride'**
+  String get confirmRide;
+
+  /// No description provided for @offlineRideQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride saved — we\'ll book when you\'re back online'**
+  String get offlineRideQueued;
+
+  /// No description provided for @offlineScheduledRideQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled ride saved — we\'ll confirm when you\'re back online'**
+  String get offlineScheduledRideQueued;
+
+  /// No description provided for @offlineQueueFlushing.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending queued ride requests…'**
+  String get offlineQueueFlushing;
+
+  /// No description provided for @offlineQueueFlushDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Queued rides submitted successfully'**
+  String get offlineQueueFlushDone;
+
+  /// No description provided for @offlineQueuePendingOnline.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} ride(s) waiting to sync'**
+  String offlineQueuePendingOnline(int count);
+
+  /// No description provided for @offlineQueuePendingScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} scheduled ride(s) queued offline'**
+  String offlineQueuePendingScheduled(int count);
+
+  /// No description provided for @offlineQueuePendingInstant.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} instant ride(s) queued offline'**
+  String offlineQueuePendingInstant(int count);
+
+  /// No description provided for @offlineQueuePendingMixed.
+  ///
+  /// In en, this message translates to:
+  /// **'{scheduled} scheduled and {instant} instant ride(s) queued'**
+  String offlineQueuePendingMixed(int scheduled, int instant);
+
+  /// No description provided for @a11yOpenMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Open menu'**
+  String get a11yOpenMenu;
+
+  /// No description provided for @a11ySafety.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety options'**
+  String get a11ySafety;
+
+  /// No description provided for @a11ySurgeMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Open demand map'**
+  String get a11ySurgeMap;
+
+  /// No description provided for @a11yRecenterMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Recenter map on your location'**
+  String get a11yRecenterMap;
+
+  /// No description provided for @a11ySelectVehicle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select {vehicle}'**
+  String a11ySelectVehicle(String vehicle);
+
+  /// No description provided for @a11yScheduleRide.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule ride for later'**
+  String get a11yScheduleRide;
+
+  /// No description provided for @a11yWhereTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose destination'**
+  String get a11yWhereTo;
+
+  /// No description provided for @minutesShort.
+  ///
+  /// In en, this message translates to:
+  /// **'min'**
+  String get minutesShort;
+
+  /// No description provided for @discountPromo.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount {code}: -{amount}'**
+  String discountPromo(String code, String amount);
+
+  /// No description provided for @referralTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite friends'**
+  String get referralTitle;
+
+  /// No description provided for @referralYourCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Your referral code'**
+  String get referralYourCode;
+
+  /// No description provided for @referralCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Code copied'**
+  String get referralCopied;
+
+  /// No description provided for @referralTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total referrals'**
+  String get referralTotal;
+
+  /// No description provided for @referralRewarded.
+  ///
+  /// In en, this message translates to:
+  /// **'Rewarded'**
+  String get referralRewarded;
+
+  /// No description provided for @referralPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get referralPending;
+
+  /// No description provided for @referralEarned.
+  ///
+  /// In en, this message translates to:
+  /// **'Total earned'**
+  String get referralEarned;
+
+  /// No description provided for @referralApplyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Have a code? Enter it here'**
+  String get referralApplyHint;
+
+  /// No description provided for @referralApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply code'**
+  String get referralApply;
+
+  /// No description provided for @referralApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Referral code applied'**
+  String get referralApplied;
+
+  /// No description provided for @splitFareDeclinedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Friend declined split fare'**
+  String get splitFareDeclinedStatus;
+
+  /// No description provided for @splitFarePaidStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Friend paid their share'**
+  String get splitFarePaidStatus;
+
+  /// No description provided for @splitFareRequiresShamCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Split fare requires Sham Cash'**
+  String get splitFareRequiresShamCash;
+
+  /// No description provided for @rideNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride #{id}'**
+  String rideNumber(int id);
+
+  /// No description provided for @actionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get actionFailed;
+
+  /// No description provided for @codeSentSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Code sent'**
+  String get codeSentSuccess;
+
+  /// No description provided for @distanceKmUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'{km} km'**
+  String distanceKmUnit(String km);
+
+  /// No description provided for @rideEtaMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'ETA: {minutes} min'**
+  String rideEtaMinutes(int minutes);
+
+  /// No description provided for @tripStatusScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled'**
+  String get tripStatusScheduled;
+
+  /// No description provided for @tripStatusSearching.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching'**
+  String get tripStatusSearching;
+
+  /// No description provided for @tripStatusAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver on the way'**
+  String get tripStatusAssigned;
+
+  /// No description provided for @tripStatusArrived.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver arrived'**
+  String get tripStatusArrived;
+
+  /// No description provided for @tripStatusOnboard.
+  ///
+  /// In en, this message translates to:
+  /// **'On board'**
+  String get tripStatusOnboard;
+
+  /// No description provided for @tripStatusStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get tripStatusStarted;
+
+  /// No description provided for @tripStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get tripStatusCompleted;
+
+  /// No description provided for @tripStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get tripStatusCancelled;
+
+  /// No description provided for @tripStatusNoDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'No driver'**
+  String get tripStatusNoDriver;
+
+  /// No description provided for @availableBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Available balance'**
+  String get availableBalance;
+
+  /// No description provided for @cardPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Card'**
+  String get cardPayment;
+
+  /// No description provided for @noDriverFoundRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'No driver found — you can retry search'**
+  String get noDriverFoundRetry;
+
+  /// No description provided for @failedToLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load'**
+  String get failedToLoad;
+
+  /// No description provided for @failedToUploadPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to upload photo'**
+  String get failedToUploadPhoto;
+
+  /// No description provided for @camera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get camera;
+
+  /// No description provided for @gallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get gallery;
+
+  /// No description provided for @deleteAccountWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This action is irreversible. Are you sure?'**
+  String get deleteAccountWarning;
+
+  /// No description provided for @deleteAccountAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deleteAccountAction;
+
+  /// No description provided for @fillAllFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Please fill all fields'**
+  String get fillAllFields;
+
+  /// No description provided for @failedToSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save'**
+  String get failedToSave;
+
+  /// No description provided for @orderPlacedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Order placed!'**
+  String get orderPlacedTitle;
+
+  /// No description provided for @orderPlacedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Order #{id} confirmed'**
+  String orderPlacedBody(String id);
+
+  /// No description provided for @orderEta.
+  ///
+  /// In en, this message translates to:
+  /// **'ETA: {eta}'**
+  String orderEta(String eta);
+
+  /// No description provided for @orderPlaceFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to place order'**
+  String get orderPlaceFailed;
+
+  /// No description provided for @multiStopNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop {n}'**
+  String multiStopNumber(int n);
+
+  /// No description provided for @locationPickFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not determine location'**
+  String get locationPickFailed;
+
+  /// No description provided for @loginError.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get loginError;
+
+  /// No description provided for @fareEstimateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not calculate fare'**
+  String get fareEstimateFailed;
+
+  /// No description provided for @locationPickFor.
+  ///
+  /// In en, this message translates to:
+  /// **'{place} — could not determine location'**
+  String locationPickFor(String place);
+
+  /// No description provided for @reportTypeSafety.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety'**
+  String get reportTypeSafety;
+
+  /// No description provided for @reportTypeDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver'**
+  String get reportTypeDriver;
+
+  /// No description provided for @reportTypeBilling.
+  ///
+  /// In en, this message translates to:
+  /// **'Billing'**
+  String get reportTypeBilling;
+
+  /// No description provided for @reportTypeTechnical.
+  ///
+  /// In en, this message translates to:
+  /// **'Technical'**
+  String get reportTypeTechnical;
+
+  /// No description provided for @reportDescribeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the issue…'**
+  String get reportDescribeHint;
+
+  /// No description provided for @reportSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Report submitted'**
+  String get reportSubmitted;
+
+  /// No description provided for @benefitsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Benefits & offers'**
+  String get benefitsTitle;
+
+  /// No description provided for @benefitsHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Get more from NovaRide'**
+  String get benefitsHeadline;
+
+  /// No description provided for @benefitsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Family profiles, promotions, referrals, and split fare — all in one place.'**
+  String get benefitsDesc;
+
+  /// No description provided for @benefitsFamilySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track rides for family members'**
+  String get benefitsFamilySubtitle;
+
+  /// No description provided for @benefitsPromosSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Active promo codes'**
+  String get benefitsPromosSubtitle;
+
+  /// No description provided for @benefitsReferralSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite friends and earn'**
+  String get benefitsReferralSubtitle;
+
+  /// No description provided for @benefitsSplitFareSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Split fare invitations'**
+  String get benefitsSplitFareSubtitle;
+
+  /// No description provided for @privacyRequestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy request'**
+  String get privacyRequestTitle;
+
+  /// No description provided for @privacyOptionalDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional details…'**
+  String get privacyOptionalDetails;
+
+  /// No description provided for @privacyRequestSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Request submitted'**
+  String get privacyRequestSubmitted;
+
+  /// No description provided for @privacyRequestsGdpr.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy requests (GDPR)'**
+  String get privacyRequestsGdpr;
+
+  /// No description provided for @privacyAccessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request data access'**
+  String get privacyAccessTitle;
+
+  /// No description provided for @privacyAccessSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Right to access your data'**
+  String get privacyAccessSubtitle;
+
+  /// No description provided for @privacyErasureTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request data erasure'**
+  String get privacyErasureTitle;
+
+  /// No description provided for @privacyErasureSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Right to erasure'**
+  String get privacyErasureSubtitle;
+
+  /// No description provided for @policyUpdateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Policy update'**
+  String get policyUpdateTitle;
+
+  /// No description provided for @policyUpdateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Please review the updated policies and accept to continue.'**
+  String get policyUpdateBody;
+
+  /// No description provided for @surgeChipLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Surge ×{mult}{zone}'**
+  String surgeChipLabel(String mult, String zone);
+
+  /// No description provided for @updatePersonalInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Update your personal information'**
+  String get updatePersonalInfo;
+
+  /// No description provided for @gpsLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'GPS location'**
+  String get gpsLocation;
+
+  /// No description provided for @noDriverRetryShort.
+  ///
+  /// In en, this message translates to:
+  /// **'No driver found — retry search'**
+  String get noDriverRetryShort;
+
+  /// No description provided for @poolRideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared ride (NovaPool)'**
+  String get poolRideTitle;
+
+  /// No description provided for @poolRideSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save up to 30% — share the ride'**
+  String get poolRideSubtitle;
+
+  /// No description provided for @poolPassengersLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Passengers'**
+  String get poolPassengersLabel;
+
+  /// No description provided for @vehicleMoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Moto'**
+  String get vehicleMoto;
+
+  /// No description provided for @vehicleMotoSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'1 rider · Fast & affordable'**
+  String get vehicleMotoSubtitle;
+
+  /// No description provided for @vehicleVanSeatsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'6+ seats'**
+  String get vehicleVanSeatsSubtitle;
+
+  /// No description provided for @vehicleTaxiSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Licensed taxi'**
+  String get vehicleTaxiSubtitle;
+
+  /// No description provided for @vehicleCarSeatsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'4 seats'**
+  String get vehicleCarSeatsSubtitle;
+
+  /// No description provided for @rideTripDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip details'**
+  String get rideTripDetails;
+
+  /// No description provided for @rideTripDetailsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Meet your driver at the pickup point'**
+  String get rideTripDetailsHint;
+
+  /// No description provided for @safetyRecordAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Record audio for added safety'**
+  String get safetyRecordAudio;
+
+  /// No description provided for @safetyRecordStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get safetyRecordStart;
+
+  /// No description provided for @safetyRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording...'**
+  String get safetyRecording;
+
+  /// No description provided for @sendMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Send message'**
+  String get sendMessage;
+
+  /// No description provided for @activeRideMeetDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Meet your driver at the pickup point'**
+  String get activeRideMeetDriver;
+
+  /// No description provided for @activeRideMeetDriverEta.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick up in {minutes} min'**
+  String activeRideMeetDriverEta(int minutes);
+
+  /// No description provided for @activeRideArriveDropoffEta.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrive at destination in {minutes} min'**
+  String activeRideArriveDropoffEta(int minutes);
+
+  /// No description provided for @ridePickupLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup'**
+  String get ridePickupLabel;
+
+  /// No description provided for @rideDropoffLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop-off'**
+  String get rideDropoffLabel;
+
+  /// No description provided for @mapMeetingPoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Meeting point'**
+  String get mapMeetingPoint;
+
+  /// No description provided for @rideDriverLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver'**
+  String get rideDriverLabel;
+
+  /// No description provided for @rideOpenSafety.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety'**
+  String get rideOpenSafety;
+
+  /// No description provided for @rideCancelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel ride?'**
+  String get rideCancelTitle;
+
+  /// No description provided for @multiStopLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get multiStopLabel;
+
+  /// No description provided for @yes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get yes;
+
+  /// No description provided for @no.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get no;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -24,10 +24,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get login_title => 'تسجيل الدخول';
 
   @override
-  String get phoneHint => 'Phone number';
+  String get phoneHint => 'رقم الهاتف';
 
   @override
-  String get loginButton => 'Login';
+  String get loginButton => 'دخول';
 
   @override
   String get otpTitle => 'رمز التحقق';
@@ -43,6 +43,23 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get resend => 'إعادة إرسال الرمز';
+
+  @override
+  String resendIn(int seconds) {
+    return 'إعادة الإرسال ($seconds)';
+  }
+
+  @override
+  String get noInternetConnection => 'لا يوجد اتصال بالإنترنت';
+
+  @override
+  String get failedToSendOtp => 'تعذّر إرسال رمز التحقق';
+
+  @override
+  String get invalidResponse => 'استجابة غير صالحة من السيرفر';
+
+  @override
+  String get failedToUpdateProfile => 'تعذّر تحديث الملف الشخصي';
 
   @override
   String get otpError => 'يرجى إدخال رمز التحقق كاملاً';
@@ -1029,6 +1046,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get inviteAdultsFeature3Desc => 'من البداية حتى النهاية.';
 
   @override
+  String get inviteAdultsFeature4 => 'تواصل مباشر';
+
+  @override
+  String get inviteAdultsFeature4Desc => 'تواصل مع أفراد العائلة في أي وقت.';
+
+  @override
+  String get inviteAdultsButton => 'دعوة البالغين';
+
+  @override
   String get inviteTeenAdults => 'Invite teenagers and adults';
 
   @override
@@ -1359,7 +1385,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notificationsTitle => 'الإشعارات';
 
   @override
-  String get notificationsEmpty => 'لا توجد إشعارات بعد';
+  String get notificationsEmpty => 'لا يوجد إشعارات';
 
   @override
   String get markAllRead => 'تعليم الكل كمقروء';
@@ -1384,6 +1410,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get rideScheduled => '🎉تم جدولة الرحلة!';
+
+  @override
+  String rideIdLabel(int id) {
+    return 'رحلة #$id';
+  }
 
   @override
   String get yourdriver => 'سائقك سيتم إعلامه 15 دقيقة قبل وقت الجدولة.';
@@ -1458,6 +1489,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cancelRideAction => 'إلغاء الرحلة';
 
   @override
+  String get rescheduleRideAction => 'تعديل الموعد';
+
+  @override
+  String get rescheduleRideSuccess => 'تم تحديث موعد الرحلة';
+
+  @override
+  String get scheduleMinLeadTime => 'يجب أن يكون الموعد بعد 30 دقيقة على الأقل';
+
+  @override
   String get cancelling => 'جارٍ الإلغاء…';
 
   @override
@@ -1529,4 +1569,546 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get viewSurgeMap => 'خريطة الطلب';
+
+  @override
+  String get accessibleRide => 'ملائم للكراسي المتحركة';
+
+  @override
+  String get vehicleTypeLabel => 'نوع المركبة';
+
+  @override
+  String get paymentMethodLabel => 'طريقة الدفع';
+
+  @override
+  String get cashPayment => 'كاش';
+
+  @override
+  String get shamCashPayment => 'شام كاش';
+
+  @override
+  String get ratingTagsTitle => 'ما الذي أعجبك؟';
+
+  @override
+  String get ratingCommentHint => 'أضف تعليقاً (اختياري)';
+
+  @override
+  String get ratingTagClean => 'سيارة نظيفة';
+
+  @override
+  String get ratingTagFriendly => 'ودود';
+
+  @override
+  String get ratingTagOnTime => 'في الوقت';
+
+  @override
+  String get ratingTagSafe => 'قيادة آمنة';
+
+  @override
+  String get ratingTagNavigation => 'مسار جيد';
+
+  @override
+  String get ratingTagProfessional => 'محترف';
+
+  @override
+  String get tipTitle => 'إكرامية للسائق';
+
+  @override
+  String get tipNone => 'بدون إكرامية';
+
+  @override
+  String get submitRating => 'إرسال التقييم';
+
+  @override
+  String get ratingStarsLabel => 'تقييم بالنجوم';
+
+  @override
+  String get addSavedPlace => 'إضافة مكان محفوظ';
+
+  @override
+  String get placeLabel => 'اسم المكان';
+
+  @override
+  String get placeAddress => 'العنوان';
+
+  @override
+  String get latitude => 'خط العرض';
+
+  @override
+  String get longitude => 'خط الطول';
+
+  @override
+  String get noSavedPlaces => 'لا أماكن محفوظة بعد';
+
+  @override
+  String get multiStopTitle => 'محطات إضافية';
+
+  @override
+  String get addStop => 'إضافة محطة';
+
+  @override
+  String get removeStop => 'إزالة';
+
+  @override
+  String get splitFareTitle => 'تقسيم الأجرة';
+
+  @override
+  String get splitFareHint => 'يدفع الصديق حصته عبر دعوة التطبيق';
+
+  @override
+  String get splitFarePhone => 'رقم هاتف الصديق';
+
+  @override
+  String get splitFarePercent => 'حصته (%)';
+
+  @override
+  String get splitFareInvitesTitle => 'دعوات تقسيم الأجرة';
+
+  @override
+  String get splitFareInvitesEmpty => 'لا توجد دعوات تقسيم';
+
+  @override
+  String get splitFareAccept => 'قبول';
+
+  @override
+  String get splitFareDecline => 'رفض';
+
+  @override
+  String get splitFareAccepted => 'تم قبول تقسيم الأجرة';
+
+  @override
+  String get splitFareAcceptedStatus => 'قبلت هذا التقسيم';
+
+  @override
+  String get splitFareYourShare => 'حصتك';
+
+  @override
+  String get splitFarePayShare => 'ادفع حصتي';
+
+  @override
+  String get splitFareFriendInvite => 'دعوة تقسيم أجرة';
+
+  @override
+  String get splitFareInviteSent => 'تم إرسال الدعوة لصديقك';
+
+  @override
+  String get splitFarePending => 'بانتظار قبول الصديق';
+
+  @override
+  String get splitFarePrimaryShare => 'أنت تدفع';
+
+  @override
+  String promoActivated(String code, String percent) {
+    return 'تم تفعيل $code — خصم $percent%';
+  }
+
+  @override
+  String get promoActiveNextRide => 'كود نشط للرحلة القادمة';
+
+  @override
+  String get promoApplyCode => 'تطبيق الكود';
+
+  @override
+  String get promoTapToActivate => 'اضغط للتفعيل';
+
+  @override
+  String promoMinFare(String amount) {
+    return 'حد أدنى $amount';
+  }
+
+  @override
+  String promoValidUntil(String date) {
+    return 'حتى $date';
+  }
+
+  @override
+  String get promoPullRefresh => 'اسحب للأسفل للتحديث';
+
+  @override
+  String get promoActivatedBadge => 'مفعّل';
+
+  @override
+  String get confirmRide => 'تأكيد الرحلة';
+
+  @override
+  String get offlineRideQueued => 'تم حفظ الطلب — سنحجز عند عودة الاتصال';
+
+  @override
+  String get offlineScheduledRideQueued => 'تم حفظ الرحلة المجدولة — سنؤكدها عند عودة الاتصال';
+
+  @override
+  String get offlineQueueFlushing => 'جارٍ إرسال الطلبات المحفوظة…';
+
+  @override
+  String get offlineQueueFlushDone => 'تم إرسال الطلبات المحفوظة بنجاح';
+
+  @override
+  String offlineQueuePendingOnline(int count) {
+    return '$count رحلة بانتظار المزامنة';
+  }
+
+  @override
+  String offlineQueuePendingScheduled(int count) {
+    return '$count رحلة مجدولة محفوظة دون اتصال';
+  }
+
+  @override
+  String offlineQueuePendingInstant(int count) {
+    return '$count رحلة فورية محفوظة دون اتصال';
+  }
+
+  @override
+  String offlineQueuePendingMixed(int scheduled, int instant) {
+    return '$scheduled مجدولة و$instant فورية محفوظة دون اتصال';
+  }
+
+  @override
+  String get a11yOpenMenu => 'فتح القائمة';
+
+  @override
+  String get a11ySafety => 'خيارات السلامة';
+
+  @override
+  String get a11ySurgeMap => 'فتح خريطة الطلب';
+
+  @override
+  String get a11yRecenterMap => 'توسيط الخريطة على موقعك';
+
+  @override
+  String a11ySelectVehicle(String vehicle) {
+    return 'اختيار $vehicle';
+  }
+
+  @override
+  String get a11yScheduleRide => 'جدولة رحلة لاحقاً';
+
+  @override
+  String get a11yWhereTo => 'اختيار الوجهة';
+
+  @override
+  String get minutesShort => 'دقيقة';
+
+  @override
+  String discountPromo(String code, String amount) {
+    return 'خصم $code: -$amount';
+  }
+
+  @override
+  String get referralTitle => 'ادعُ أصدقاءك';
+
+  @override
+  String get referralYourCode => 'رمز الإحالة الخاص بك';
+
+  @override
+  String get referralCopied => 'تم نسخ الرمز';
+
+  @override
+  String get referralTotal => 'إجمالي الإحالات';
+
+  @override
+  String get referralRewarded => 'مكافأة';
+
+  @override
+  String get referralPending => 'قيد الانتظار';
+
+  @override
+  String get referralEarned => 'إجمالي الأرباح';
+
+  @override
+  String get referralApplyHint => 'لديك رمز؟ أدخله هنا';
+
+  @override
+  String get referralApply => 'تطبيق الرمز';
+
+  @override
+  String get referralApplied => 'تم تطبيق رمز الإحالة';
+
+  @override
+  String get splitFareDeclinedStatus => 'الصديق رفض تقسيم الأجرة';
+
+  @override
+  String get splitFarePaidStatus => 'الصديق دفع حصته';
+
+  @override
+  String get splitFareRequiresShamCash => 'تقسيم الأجرة يتطلب شام كاش';
+
+  @override
+  String rideNumber(int id) {
+    return 'رحلة #$id';
+  }
+
+  @override
+  String get actionFailed => 'فشلت العملية';
+
+  @override
+  String get codeSentSuccess => 'تم إرسال الرمز';
+
+  @override
+  String distanceKmUnit(String km) {
+    return '$km كم';
+  }
+
+  @override
+  String rideEtaMinutes(int minutes) {
+    return 'الوصول خلال $minutes د';
+  }
+
+  @override
+  String get tripStatusScheduled => 'مجدولة';
+
+  @override
+  String get tripStatusSearching => 'بحث';
+
+  @override
+  String get tripStatusAssigned => 'السائق في الطريق';
+
+  @override
+  String get tripStatusArrived => 'وصل السائق';
+
+  @override
+  String get tripStatusOnboard => 'صعدت';
+
+  @override
+  String get tripStatusStarted => 'جارية';
+
+  @override
+  String get tripStatusCompleted => 'مكتملة';
+
+  @override
+  String get tripStatusCancelled => 'ملغاة';
+
+  @override
+  String get tripStatusNoDriver => 'لا سائق';
+
+  @override
+  String get availableBalance => 'الرصيد المتاح';
+
+  @override
+  String get cardPayment => 'بطاقة';
+
+  @override
+  String get noDriverFoundRetry => 'لم نجد سائقاً — يمكنك إعادة البحث';
+
+  @override
+  String get failedToLoad => 'تعذّر التحميل';
+
+  @override
+  String get failedToUploadPhoto => 'تعذّر رفع الصورة';
+
+  @override
+  String get camera => 'الكاميرا';
+
+  @override
+  String get gallery => 'المعرض';
+
+  @override
+  String get deleteAccountWarning => 'هذا الإجراء لا يمكن التراجع عنه. هل أنت متأكد؟';
+
+  @override
+  String get deleteAccountAction => 'حذف';
+
+  @override
+  String get fillAllFields => 'يرجى تعبئة جميع الحقول';
+
+  @override
+  String get failedToSave => 'فشل الحفظ';
+
+  @override
+  String get orderPlacedTitle => 'تم تأكيد الطلب!';
+
+  @override
+  String orderPlacedBody(String id) {
+    return 'طلب #$id مؤكد';
+  }
+
+  @override
+  String orderEta(String eta) {
+    return 'الوصول: $eta';
+  }
+
+  @override
+  String get orderPlaceFailed => 'فشل إرسال الطلب';
+
+  @override
+  String multiStopNumber(int n) {
+    return 'توقف $n';
+  }
+
+  @override
+  String get locationPickFailed => 'تعذّر تحديد الموقع';
+
+  @override
+  String get loginError => 'حدث خطأ';
+
+  @override
+  String get fareEstimateFailed => 'تعذّر حساب السعر';
+
+  @override
+  String locationPickFor(String place) {
+    return '$place — تعذّر تحديد الموقع';
+  }
+
+  @override
+  String get reportTypeSafety => 'سلامة';
+
+  @override
+  String get reportTypeDriver => 'السائق';
+
+  @override
+  String get reportTypeBilling => 'الدفع';
+
+  @override
+  String get reportTypeTechnical => 'تقني';
+
+  @override
+  String get reportDescribeHint => 'صف المشكلة…';
+
+  @override
+  String get reportSubmitted => 'تم إرسال البلاغ';
+
+  @override
+  String get benefitsTitle => 'المزايا والعروض';
+
+  @override
+  String get benefitsHeadline => 'استفد من مزايا NovaRide';
+
+  @override
+  String get benefitsDesc => 'إدارة العائلة، العروض، الإحالات، وتقسيم الأجرة — كلها من مكان واحد.';
+
+  @override
+  String get benefitsFamilySubtitle => 'تابع رحلات أفراد العائلة';
+
+  @override
+  String get benefitsPromosSubtitle => 'أكواد خصم نشطة';
+
+  @override
+  String get benefitsReferralSubtitle => 'ادعُ أصدقاءك واكسب';
+
+  @override
+  String get benefitsSplitFareSubtitle => 'دعوات تقسيم الأجرة';
+
+  @override
+  String get privacyRequestTitle => 'طلب خصوصية';
+
+  @override
+  String get privacyOptionalDetails => 'تفاصيل اختيارية…';
+
+  @override
+  String get privacyRequestSubmitted => 'تم إرسال الطلب';
+
+  @override
+  String get privacyRequestsGdpr => 'طلبات الخصوصية (GDPR)';
+
+  @override
+  String get privacyAccessTitle => 'طلب نسخة بياناتي';
+
+  @override
+  String get privacyAccessSubtitle => 'الحق في الوصول لبياناتك';
+
+  @override
+  String get privacyErasureTitle => 'طلب حذف البيانات';
+
+  @override
+  String get privacyErasureSubtitle => 'الحق في المحو';
+
+  @override
+  String get policyUpdateTitle => 'تحديث السياسات';
+
+  @override
+  String get policyUpdateBody => 'يرجى مراجعة السياسات المحدّثة والموافقة للمتابعة.';
+
+  @override
+  String surgeChipLabel(String mult, String zone) {
+    return 'ذروة ×$mult$zone';
+  }
+
+  @override
+  String get updatePersonalInfo => 'حدّث معلوماتك الشخصية';
+
+  @override
+  String get gpsLocation => 'موقع GPS';
+
+  @override
+  String get noDriverRetryShort => 'لم نجد سائقاً — أعد البحث';
+
+  @override
+  String get poolRideTitle => 'رحلة مشتركة (NovaPool)';
+
+  @override
+  String get poolRideSubtitle => 'وفّر حتى 30% — شارك السيارة';
+
+  @override
+  String get poolPassengersLabel => 'عدد الركاب';
+
+  @override
+  String get vehicleMoto => 'موتور';
+
+  @override
+  String get vehicleMotoSubtitle => 'راكب واحد · سريع واقتصادي';
+
+  @override
+  String get vehicleVanSeatsSubtitle => '6+ ركاب';
+
+  @override
+  String get vehicleTaxiSubtitle => 'تكسي مرخّص';
+
+  @override
+  String get vehicleCarSeatsSubtitle => '4 ركاب';
+
+  @override
+  String get rideTripDetails => 'تفاصيل المشوار';
+
+  @override
+  String get rideTripDetailsHint => 'التقِ بالشريك السائق في موقع الالتقاء';
+
+  @override
+  String get safetyRecordAudio => 'سجّل الصوت لمزيد من السلامة';
+
+  @override
+  String get safetyRecordStart => 'ابدأ';
+
+  @override
+  String get safetyRecording => 'جاري التسجيل...';
+
+  @override
+  String get sendMessage => 'إرسال رسالة';
+
+  @override
+  String get activeRideMeetDriver => 'التقِ بالشريك السائق في موقع الالتقاء';
+
+  @override
+  String activeRideMeetDriverEta(int minutes) {
+    return 'الالتقاء بالشريك السائق خلال $minutes من الدقائق';
+  }
+
+  @override
+  String activeRideArriveDropoffEta(int minutes) {
+    return 'الوصول للوجهة خلال $minutes من الدقائق';
+  }
+
+  @override
+  String get ridePickupLabel => 'نقطة الانطلاق';
+
+  @override
+  String get rideDropoffLabel => 'الوجهة';
+
+  @override
+  String get mapMeetingPoint => 'نقطة الالتقاء';
+
+  @override
+  String get rideDriverLabel => 'السائق';
+
+  @override
+  String get rideOpenSafety => 'السلامة';
+
+  @override
+  String get rideCancelTitle => 'إلغاء الرحلة؟';
+
+  @override
+  String get multiStopLabel => 'محطة';
+
+  @override
+  String get yes => 'نعم';
+
+  @override
+  String get no => 'لا';
 }

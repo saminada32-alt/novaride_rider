@@ -3,26 +3,37 @@ import 'package:flutter/services.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../../l10n/app_localizations.dart';
 import '../services/rider_service.dart';
+import '../split_fare/split_fare_service.dart';
 
 /// Shows Sham Cash transfer instructions and lets the passenger submit a reference.
 Future<void> showShamCashPaymentSheet(
   BuildContext context, {
   required int rideId,
   double? estimatedFare,
+  bool isSplitFriend = false,
 }) async {
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (ctx) => _ShamCashSheet(rideId: rideId, estimatedFare: estimatedFare),
+    builder: (ctx) => _ShamCashSheet(
+      rideId: rideId,
+      estimatedFare: estimatedFare,
+      isSplitFriend: isSplitFriend,
+    ),
   );
 }
 
 class _ShamCashSheet extends StatefulWidget {
   final int rideId;
   final double? estimatedFare;
+  final bool isSplitFriend;
 
-  const _ShamCashSheet({required this.rideId, this.estimatedFare});
+  const _ShamCashSheet({
+    required this.rideId,
+    this.estimatedFare,
+    this.isSplitFriend = false,
+  });
 
   @override
   State<_ShamCashSheet> createState() => _ShamCashSheetState();
@@ -68,7 +79,11 @@ class _ShamCashSheetState extends State<_ShamCashSheet> {
     if (ref.isEmpty) return;
     setState(() => _submitting = true);
     try {
-      await RiderService.instance.submitPaymentReference(widget.rideId, ref);
+      if (widget.isSplitFriend) {
+        await SplitFareService.instance.paySplitShare(widget.rideId, ref);
+      } else {
+        await RiderService.instance.submitPaymentReference(widget.rideId, ref);
+      }
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(

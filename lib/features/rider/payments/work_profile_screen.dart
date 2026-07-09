@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../account/my_account_all/service/account_service.dart';
@@ -59,43 +60,56 @@ class _WorkProfileScreenState extends State<WorkProfileScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l.workProfile), centerTitle: true),
+    return A11yScreen(
+      label: l.workProfile,
+      child: Scaffold(
+      appBar: AppBar(
+        title: Semantics(header: true, child: Text(l.workProfile)),
+        centerTitle: true,
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           Text(l.workProfileDesc, style: const TextStyle(color: Colors.black54)),
           const SizedBox(height: 20),
-          TextField(
-            controller: _addressCtrl,
-            decoration: InputDecoration(
-              labelText: l.workAddress,
-              border: const OutlineInputBorder(),
-              prefixIcon: const Icon(Icons.business_outlined),
+          A11yTextField(
+            label: l.workAddress,
+            child: TextField(
+              controller: _addressCtrl,
+              decoration: InputDecoration(
+                labelText: l.workAddress,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.business_outlined),
+              ),
+              maxLines: 2,
+              textInputAction: TextInputAction.done,
             ),
-            maxLines: 2,
-            textInputAction: TextInputAction.done,
           ),
           const SizedBox(height: 24),
-          FilledButton(
-            onPressed: _saving ? null : _save,
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(52),
-              backgroundColor: const Color(0xff16a34a),
+          A11yButton(
+            label: l.save,
+            enabled: !_saving,
+            child: FilledButton(
+              onPressed: _saving ? null : _save,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+                backgroundColor: const Color(0xff16a34a),
+              ),
+              child: _saving
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(l.save),
             ),
-            child: _saving
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : Text(l.save),
           ),
         ],
       ),
+    ),
     );
   }
 }

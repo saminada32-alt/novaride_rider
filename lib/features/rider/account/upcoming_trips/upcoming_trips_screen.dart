@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 
 import '../../../../core/utils/currency_utils.dart';
+import '../../../../core/widgets/a11y.dart';
+import '../../../../core/utils/ride_trip_status.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../services/rider_service.dart';
 import '../../models/ride_model.dart';
@@ -97,37 +99,19 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
     return '${d.day}/${d.month}/${d.year}  ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
   }
 
-  String _statusToString(RideStatus s) {
-    switch (s) {
-      case RideStatus.searching:
-        return 'SEARCHING';
-      case RideStatus.driver_assigned:
-        return 'DRIVER ASSIGNED';
-      case RideStatus.driver_arrived:
-        return 'DRIVER ARRIVED';
-      case RideStatus.passenger_onboard:
-        return 'PASSENGER ONBOARD';
-      case RideStatus.trip_started:
-        return 'IN PROGRESS';
-      case RideStatus.completed:
-        return 'COMPLETED';
-      case RideStatus.cancelled:
-        return 'CANCELLED';
-      case RideStatus.no_driver_found:
-        return 'NO DRIVER FOUND';
-      case RideStatus.scheduled:
-        return 'SCHEDULED';
-    }
-  }
+  String _statusLabel(RideStatus s, AppLocalizations l) =>
+      rideTripStatusLabel(s, l);
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
-    return Scaffold(
+    return A11yScreen(
+      label: l.upcomingTrips,
+      child: Scaffold(
       backgroundColor: const Color(0xfff7f7f7),
       appBar: AppBar(
-        title: Text(l.upcomingTrips),
+        title: Semantics(header: true, child: Text(l.upcomingTrips)),
         centerTitle: true,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -143,9 +127,10 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
                   : ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: _rides.length,
-                      itemBuilder: (_, i) => _rideCard(_rides[i]),
+                      itemBuilder: (_, i) => _rideCard(_rides[i], l),
                     ),
             ),
+    ),
     );
   }
 
@@ -231,7 +216,7 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
     ],
   );
 
-  Widget _rideCard(RideModel ride) {
+  Widget _rideCard(RideModel ride, AppLocalizations l) {
     Color color;
     switch (ride.status) {
       case RideStatus.driver_assigned:
@@ -280,7 +265,7 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
                   Icon(Icons.directions_car, color: color, size: 18),
                   const SizedBox(width: 6),
                   Text(
-                    'Ride #${ride.id}',
+                    AppLocalizations.of(context)!.rideNumber(ride.id),
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -295,7 +280,7 @@ class _UpcomingTripsScreenState extends State<UpcomingTripsScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  _statusToString(ride.status).replaceAll('_', ' '),
+                  _statusLabel(ride.status, l),
                   style: TextStyle(
                     color: color,
                     fontSize: 11,

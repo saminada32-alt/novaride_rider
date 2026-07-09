@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/utils/currency_utils.dart';
+import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
 import '../services/rider_service.dart';
 
@@ -68,26 +69,29 @@ class _CarWashOrderScreenState extends State<CarWashOrderScreen> {
     setState(() => _loading = false);
 
     if (result != null) {
+      final l = AppLocalizations.of(context)!;
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
           icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
-          title: const Text('Order Placed!'),
-          content: Text('Order #${result['id']} confirmed!\nETA: $eta'),
+          title: Text(l.orderPlacedTitle),
+          content: Text(
+            '${l.orderPlacedBody(result['id'].toString())}\n${l.orderEta(eta)}',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context)
                 ..pop()
                 ..pop(),
-              child: const Text('OK'),
+              child: Text(l.done),
             ),
           ],
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to place order'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.orderPlaceFailed),
           backgroundColor: Colors.red,
         ),
       );
@@ -98,10 +102,12 @@ class _CarWashOrderScreenState extends State<CarWashOrderScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
-    return Scaffold(
+    return A11yScreen(
+      label: l.carWashTitle,
+      child: Scaffold(
       backgroundColor: const Color(0xfff6f7fb),
       appBar: AppBar(
-        title: Text(l.carWashTitle),
+        title: Semantics(header: true, child: Text(l.carWashTitle)),
         centerTitle: true,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -213,7 +219,7 @@ class _CarWashOrderScreenState extends State<CarWashOrderScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  onPressed: () => setState(() => location = 'GPS Location'),
+                  onPressed: () => setState(() => location = l.gpsLocation),
                   child: Text(
                     l.now,
                     style: const TextStyle(color: Colors.white),
@@ -280,39 +286,44 @@ class _CarWashOrderScreenState extends State<CarWashOrderScreen> {
 
             const SizedBox(height: 20),
 
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _valid ? Colors.black : Colors.grey,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+            A11yButton(
+              label: l.placeOrder,
+              enabled: _valid && !_loading,
+              child: SizedBox(
+                width: double.infinity,
+                height: 55,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _valid ? Colors.black : Colors.grey,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
+                  onPressed: (_valid && !_loading) ? _place : null,
+                  child: _loading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          l.placeOrder,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
                 ),
-                onPressed: (_valid && !_loading) ? _place : null,
-                child: _loading
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Text(
-                        l.placeOrder,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
               ),
             ),
           ],
         ),
       ),
+    ),
     );
   }
 

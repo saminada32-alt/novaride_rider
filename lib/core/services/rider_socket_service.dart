@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants/api_constants.dart';
@@ -32,7 +33,7 @@ class RiderSocketService {
     );
 
     _socket!.onConnect((_) {
-      print('Rider Socket Connected');
+      if (kDebugMode) debugPrint('Rider Socket Connected');
       if (_pendingTripId != null) {
         _socket!.emit('trip:join', {'tripId': _pendingTripId});
         _pendingTripId = null;

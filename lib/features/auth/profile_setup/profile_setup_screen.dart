@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../intro/intro_screen.dart';
+import '../../../core/widgets/a11y.dart';
+import '../../../core/utils/auth_error_messages.dart';
 import '../../../l10n/app_localizations.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
@@ -72,6 +74,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
     if (!mounted) return;
 
+    final local = AppLocalizations.of(context)!;
+
     if (ok) {
       Navigator.pushAndRemoveUntil(
         context,
@@ -81,7 +85,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(prov.error ?? 'Failed to save profile'),
+          content: Text(localizeAuthError(prov.error, local)),
           backgroundColor: Colors.red.shade600,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -116,9 +120,11 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     final local = AppLocalizations.of(context)!;
     final prov = context.watch<AuthProvider>();
 
-    return Scaffold(
+    return A11yScreen(
+      label: local.completeProfile,
+      child: Scaffold(
       appBar: AppBar(
-        title: Text(local.completeProfile),
+        title: Semantics(header: true, child: Text(local.completeProfile)),
         centerTitle: true,
         automaticallyImplyLeading: false,
         backgroundColor: Colors.white,
@@ -184,11 +190,14 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               ),
               const SizedBox(height: 28),
 
-              TextFormField(
-                controller: _firstName,
-                decoration: _dec(local.firstName, Icons.person_outline),
-                validator: (v) =>
-                    v!.trim().isEmpty ? local.requiredField : null,
+              A11yTextField(
+                label: local.firstName,
+                child: TextFormField(
+                  controller: _firstName,
+                  decoration: _dec(local.firstName, Icons.person_outline),
+                  validator: (v) =>
+                      v!.trim().isEmpty ? local.requiredField : null,
+                ),
               ),
               const SizedBox(height: 16),
 
@@ -231,37 +240,42 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               SizedBox(
                 width: double.infinity,
                 height: 56,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green.shade700,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                child: A11yButton(
+                  label: local.continueText,
+                  enabled: !prov.loading,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.shade700,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
+                    onPressed: prov.loading ? null : _submit,
+                    child: prov.loading
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            local.continueText,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
-                  onPressed: prov.loading ? null : _submit,
-                  child: prov.loading
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Text(
-                          local.continueText,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
                 ),
               ),
             ],
           ),
         ),
       ),
+    ),
     );
   }
 }

@@ -45,6 +45,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resend => 'Resend code';
 
   @override
+  String resendIn(int seconds) {
+    return 'Resend ($seconds)';
+  }
+
+  @override
+  String get noInternetConnection => 'No internet connection';
+
+  @override
+  String get failedToSendOtp => 'Failed to send verification code';
+
+  @override
+  String get invalidResponse => 'Invalid server response';
+
+  @override
+  String get failedToUpdateProfile => 'Failed to update profile';
+
+  @override
   String get otpError => 'Please enter the complete verification code';
 
   @override
@@ -1029,6 +1046,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inviteAdultsFeature3Desc => 'Track trips from start to finish.';
 
   @override
+  String get inviteAdultsFeature4 => 'Stay in touch';
+
+  @override
+  String get inviteAdultsFeature4Desc => 'Connect with family members anytime.';
+
+  @override
+  String get inviteAdultsButton => 'Invite adults';
+
+  @override
   String get inviteTeenAdults => 'Invite teenagers and adults';
 
   @override
@@ -1359,7 +1385,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationsTitle => 'Notifications';
 
   @override
-  String get notificationsEmpty => 'No notifications yet';
+  String get notificationsEmpty => 'No notifications';
 
   @override
   String get markAllRead => 'Mark all read';
@@ -1384,6 +1410,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rideScheduled => 'Ride Scheduled! 🎉';
+
+  @override
+  String rideIdLabel(int id) {
+    return 'Ride #$id';
+  }
 
   @override
   String get yourdriver => 'Your driver will be notified 15 minutes before your scheduled time.';
@@ -1458,6 +1489,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancelRideAction => 'Cancel ride';
 
   @override
+  String get rescheduleRideAction => 'Change time';
+
+  @override
+  String get rescheduleRideSuccess => 'Ride time updated';
+
+  @override
+  String get scheduleMinLeadTime => 'Pickup must be at least 30 minutes from now';
+
+  @override
   String get cancelling => 'Cancelling…';
 
   @override
@@ -1529,4 +1569,546 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewSurgeMap => 'Demand map';
+
+  @override
+  String get accessibleRide => 'Accessible';
+
+  @override
+  String get vehicleTypeLabel => 'Vehicle type';
+
+  @override
+  String get paymentMethodLabel => 'Payment method';
+
+  @override
+  String get cashPayment => 'Cash';
+
+  @override
+  String get shamCashPayment => 'Sham Cash';
+
+  @override
+  String get ratingTagsTitle => 'What went well?';
+
+  @override
+  String get ratingCommentHint => 'Add a comment (optional)';
+
+  @override
+  String get ratingTagClean => 'Clean car';
+
+  @override
+  String get ratingTagFriendly => 'Friendly';
+
+  @override
+  String get ratingTagOnTime => 'On time';
+
+  @override
+  String get ratingTagSafe => 'Safe driving';
+
+  @override
+  String get ratingTagNavigation => 'Good route';
+
+  @override
+  String get ratingTagProfessional => 'Professional';
+
+  @override
+  String get tipTitle => 'Add a tip for your driver';
+
+  @override
+  String get tipNone => 'No tip';
+
+  @override
+  String get submitRating => 'Submit rating';
+
+  @override
+  String get ratingStarsLabel => 'Star rating';
+
+  @override
+  String get addSavedPlace => 'Add saved place';
+
+  @override
+  String get placeLabel => 'Place name';
+
+  @override
+  String get placeAddress => 'Address';
+
+  @override
+  String get latitude => 'Latitude';
+
+  @override
+  String get longitude => 'Longitude';
+
+  @override
+  String get noSavedPlaces => 'No saved places yet';
+
+  @override
+  String get multiStopTitle => 'Add stops';
+
+  @override
+  String get addStop => 'Add stop';
+
+  @override
+  String get removeStop => 'Remove';
+
+  @override
+  String get splitFareTitle => 'Split fare';
+
+  @override
+  String get splitFareHint => 'Friend pays their share via app invite';
+
+  @override
+  String get splitFarePhone => 'Friend\'s phone number';
+
+  @override
+  String get splitFarePercent => 'Their share (%)';
+
+  @override
+  String get splitFareInvitesTitle => 'Split fare invites';
+
+  @override
+  String get splitFareInvitesEmpty => 'No split fare invites';
+
+  @override
+  String get splitFareAccept => 'Accept';
+
+  @override
+  String get splitFareDecline => 'Decline';
+
+  @override
+  String get splitFareAccepted => 'Split fare accepted';
+
+  @override
+  String get splitFareAcceptedStatus => 'You accepted this split';
+
+  @override
+  String get splitFareYourShare => 'Your share';
+
+  @override
+  String get splitFarePayShare => 'Pay my share';
+
+  @override
+  String get splitFareFriendInvite => 'Split fare invite';
+
+  @override
+  String get splitFareInviteSent => 'Invite sent to your friend';
+
+  @override
+  String get splitFarePending => 'Waiting for friend to accept';
+
+  @override
+  String get splitFarePrimaryShare => 'You pay';
+
+  @override
+  String promoActivated(String code, String percent) {
+    return 'Activated $code — $percent% off';
+  }
+
+  @override
+  String get promoActiveNextRide => 'Active for your next ride';
+
+  @override
+  String get promoApplyCode => 'Apply code';
+
+  @override
+  String get promoTapToActivate => 'Tap to activate';
+
+  @override
+  String promoMinFare(String amount) {
+    return 'Min. fare $amount';
+  }
+
+  @override
+  String promoValidUntil(String date) {
+    return 'Until $date';
+  }
+
+  @override
+  String get promoPullRefresh => 'Pull down to refresh';
+
+  @override
+  String get promoActivatedBadge => 'Active';
+
+  @override
+  String get confirmRide => 'Confirm ride';
+
+  @override
+  String get offlineRideQueued => 'Ride saved — we\'ll book when you\'re back online';
+
+  @override
+  String get offlineScheduledRideQueued => 'Scheduled ride saved — we\'ll confirm when you\'re back online';
+
+  @override
+  String get offlineQueueFlushing => 'Sending queued ride requests…';
+
+  @override
+  String get offlineQueueFlushDone => 'Queued rides submitted successfully';
+
+  @override
+  String offlineQueuePendingOnline(int count) {
+    return '$count ride(s) waiting to sync';
+  }
+
+  @override
+  String offlineQueuePendingScheduled(int count) {
+    return '$count scheduled ride(s) queued offline';
+  }
+
+  @override
+  String offlineQueuePendingInstant(int count) {
+    return '$count instant ride(s) queued offline';
+  }
+
+  @override
+  String offlineQueuePendingMixed(int scheduled, int instant) {
+    return '$scheduled scheduled and $instant instant ride(s) queued';
+  }
+
+  @override
+  String get a11yOpenMenu => 'Open menu';
+
+  @override
+  String get a11ySafety => 'Safety options';
+
+  @override
+  String get a11ySurgeMap => 'Open demand map';
+
+  @override
+  String get a11yRecenterMap => 'Recenter map on your location';
+
+  @override
+  String a11ySelectVehicle(String vehicle) {
+    return 'Select $vehicle';
+  }
+
+  @override
+  String get a11yScheduleRide => 'Schedule ride for later';
+
+  @override
+  String get a11yWhereTo => 'Choose destination';
+
+  @override
+  String get minutesShort => 'min';
+
+  @override
+  String discountPromo(String code, String amount) {
+    return 'Discount $code: -$amount';
+  }
+
+  @override
+  String get referralTitle => 'Invite friends';
+
+  @override
+  String get referralYourCode => 'Your referral code';
+
+  @override
+  String get referralCopied => 'Code copied';
+
+  @override
+  String get referralTotal => 'Total referrals';
+
+  @override
+  String get referralRewarded => 'Rewarded';
+
+  @override
+  String get referralPending => 'Pending';
+
+  @override
+  String get referralEarned => 'Total earned';
+
+  @override
+  String get referralApplyHint => 'Have a code? Enter it here';
+
+  @override
+  String get referralApply => 'Apply code';
+
+  @override
+  String get referralApplied => 'Referral code applied';
+
+  @override
+  String get splitFareDeclinedStatus => 'Friend declined split fare';
+
+  @override
+  String get splitFarePaidStatus => 'Friend paid their share';
+
+  @override
+  String get splitFareRequiresShamCash => 'Split fare requires Sham Cash';
+
+  @override
+  String rideNumber(int id) {
+    return 'Ride #$id';
+  }
+
+  @override
+  String get actionFailed => 'Something went wrong';
+
+  @override
+  String get codeSentSuccess => 'Code sent';
+
+  @override
+  String distanceKmUnit(String km) {
+    return '$km km';
+  }
+
+  @override
+  String rideEtaMinutes(int minutes) {
+    return 'ETA: $minutes min';
+  }
+
+  @override
+  String get tripStatusScheduled => 'Scheduled';
+
+  @override
+  String get tripStatusSearching => 'Searching';
+
+  @override
+  String get tripStatusAssigned => 'Driver on the way';
+
+  @override
+  String get tripStatusArrived => 'Driver arrived';
+
+  @override
+  String get tripStatusOnboard => 'On board';
+
+  @override
+  String get tripStatusStarted => 'In progress';
+
+  @override
+  String get tripStatusCompleted => 'Completed';
+
+  @override
+  String get tripStatusCancelled => 'Cancelled';
+
+  @override
+  String get tripStatusNoDriver => 'No driver';
+
+  @override
+  String get availableBalance => 'Available balance';
+
+  @override
+  String get cardPayment => 'Card';
+
+  @override
+  String get noDriverFoundRetry => 'No driver found — you can retry search';
+
+  @override
+  String get failedToLoad => 'Failed to load';
+
+  @override
+  String get failedToUploadPhoto => 'Failed to upload photo';
+
+  @override
+  String get camera => 'Camera';
+
+  @override
+  String get gallery => 'Gallery';
+
+  @override
+  String get deleteAccountWarning => 'This action is irreversible. Are you sure?';
+
+  @override
+  String get deleteAccountAction => 'Delete';
+
+  @override
+  String get fillAllFields => 'Please fill all fields';
+
+  @override
+  String get failedToSave => 'Failed to save';
+
+  @override
+  String get orderPlacedTitle => 'Order placed!';
+
+  @override
+  String orderPlacedBody(String id) {
+    return 'Order #$id confirmed';
+  }
+
+  @override
+  String orderEta(String eta) {
+    return 'ETA: $eta';
+  }
+
+  @override
+  String get orderPlaceFailed => 'Failed to place order';
+
+  @override
+  String multiStopNumber(int n) {
+    return 'Stop $n';
+  }
+
+  @override
+  String get locationPickFailed => 'Could not determine location';
+
+  @override
+  String get loginError => 'Something went wrong';
+
+  @override
+  String get fareEstimateFailed => 'Could not calculate fare';
+
+  @override
+  String locationPickFor(String place) {
+    return '$place — could not determine location';
+  }
+
+  @override
+  String get reportTypeSafety => 'Safety';
+
+  @override
+  String get reportTypeDriver => 'Driver';
+
+  @override
+  String get reportTypeBilling => 'Billing';
+
+  @override
+  String get reportTypeTechnical => 'Technical';
+
+  @override
+  String get reportDescribeHint => 'Describe the issue…';
+
+  @override
+  String get reportSubmitted => 'Report submitted';
+
+  @override
+  String get benefitsTitle => 'Benefits & offers';
+
+  @override
+  String get benefitsHeadline => 'Get more from NovaRide';
+
+  @override
+  String get benefitsDesc => 'Family profiles, promotions, referrals, and split fare — all in one place.';
+
+  @override
+  String get benefitsFamilySubtitle => 'Track rides for family members';
+
+  @override
+  String get benefitsPromosSubtitle => 'Active promo codes';
+
+  @override
+  String get benefitsReferralSubtitle => 'Invite friends and earn';
+
+  @override
+  String get benefitsSplitFareSubtitle => 'Split fare invitations';
+
+  @override
+  String get privacyRequestTitle => 'Privacy request';
+
+  @override
+  String get privacyOptionalDetails => 'Optional details…';
+
+  @override
+  String get privacyRequestSubmitted => 'Request submitted';
+
+  @override
+  String get privacyRequestsGdpr => 'Privacy requests (GDPR)';
+
+  @override
+  String get privacyAccessTitle => 'Request data access';
+
+  @override
+  String get privacyAccessSubtitle => 'Right to access your data';
+
+  @override
+  String get privacyErasureTitle => 'Request data erasure';
+
+  @override
+  String get privacyErasureSubtitle => 'Right to erasure';
+
+  @override
+  String get policyUpdateTitle => 'Policy update';
+
+  @override
+  String get policyUpdateBody => 'Please review the updated policies and accept to continue.';
+
+  @override
+  String surgeChipLabel(String mult, String zone) {
+    return 'Surge ×$mult$zone';
+  }
+
+  @override
+  String get updatePersonalInfo => 'Update your personal information';
+
+  @override
+  String get gpsLocation => 'GPS location';
+
+  @override
+  String get noDriverRetryShort => 'No driver found — retry search';
+
+  @override
+  String get poolRideTitle => 'Shared ride (NovaPool)';
+
+  @override
+  String get poolRideSubtitle => 'Save up to 30% — share the ride';
+
+  @override
+  String get poolPassengersLabel => 'Passengers';
+
+  @override
+  String get vehicleMoto => 'Moto';
+
+  @override
+  String get vehicleMotoSubtitle => '1 rider · Fast & affordable';
+
+  @override
+  String get vehicleVanSeatsSubtitle => '6+ seats';
+
+  @override
+  String get vehicleTaxiSubtitle => 'Licensed taxi';
+
+  @override
+  String get vehicleCarSeatsSubtitle => '4 seats';
+
+  @override
+  String get rideTripDetails => 'Trip details';
+
+  @override
+  String get rideTripDetailsHint => 'Meet your driver at the pickup point';
+
+  @override
+  String get safetyRecordAudio => 'Record audio for added safety';
+
+  @override
+  String get safetyRecordStart => 'Start';
+
+  @override
+  String get safetyRecording => 'Recording...';
+
+  @override
+  String get sendMessage => 'Send message';
+
+  @override
+  String get activeRideMeetDriver => 'Meet your driver at the pickup point';
+
+  @override
+  String activeRideMeetDriverEta(int minutes) {
+    return 'Pick up in $minutes min';
+  }
+
+  @override
+  String activeRideArriveDropoffEta(int minutes) {
+    return 'Arrive at destination in $minutes min';
+  }
+
+  @override
+  String get ridePickupLabel => 'Pickup';
+
+  @override
+  String get rideDropoffLabel => 'Drop-off';
+
+  @override
+  String get mapMeetingPoint => 'Meeting point';
+
+  @override
+  String get rideDriverLabel => 'Driver';
+
+  @override
+  String get rideOpenSafety => 'Safety';
+
+  @override
+  String get rideCancelTitle => 'Cancel ride?';
+
+  @override
+  String get multiStopLabel => 'Stop';
+
+  @override
+  String get yes => 'Yes';
+
+  @override
+  String get no => 'No';
 }

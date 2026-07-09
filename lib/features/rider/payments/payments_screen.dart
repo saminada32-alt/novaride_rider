@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/utils/currency_utils.dart';
+import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
 import '../services/rider_service.dart';
 import 'wallet_transactions_screen.dart';
@@ -14,30 +15,49 @@ class PaymentScreen extends StatefulWidget {
 class _PaymentScreenState extends State<PaymentScreen> {
   double _balance = 0;
   bool _loading = true;
+  List<Map<String, dynamic>> _methods = [];
+  String? _shamPhone;
+  String? _shamAccount;
 
   @override
   void initState() {
     super.initState();
-    _loadBalance();
+    _load();
   }
 
-  Future<void> _loadBalance() async {
+  Future<void> _load() async {
     setState(() => _loading = true);
-    _balance = await RiderService.instance.getWalletBalance();
-    setState(() => _loading = false);
+    try {
+      _balance = await RiderService.instance.getWalletBalance();
+      final cfg = await RiderService.instance.getPaymentsConfig();
+      final methods = cfg['methods'];
+      if (methods is List) {
+        _methods = methods.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      }
+      _shamPhone = cfg['shamCashPhone'] as String?;
+      _shamAccount = cfg['shamCashAccountName'] as String?;
+    } catch (_) {
+      // Wallet/config may fail offline — show balance fallback only.
+    }
+    if (mounted) setState(() => _loading = false);
   }
 
   @override
   Widget build(BuildContext context) {
     final local = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(local.payment), centerTitle: true),
+    return A11yScreen(
+      label: local.payment,
+      child: Scaffold(
+      appBar: AppBar(
+        title: Semantics(header: true, child: Text(local.payment)),
+        centerTitle: true,
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: Colors.green))
           : RefreshIndicator(
               color: Colors.green,
-              onRefresh: _loadBalance,
+              onRefresh: _load,
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
@@ -74,8 +94,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'Available Balance',
+                        Text(
+                          local.availableBalance,
                           style: TextStyle(color: Colors.white60, fontSize: 12),
                         ),
                       ],
@@ -113,9 +133,38 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  _methodTile(context, Icons.phone_iphone, local.shamCash, comingSoon: true),
-                  _methodTile(context, Icons.money, local.cash, comingSoon: true),
-                  _methodTile(context, Icons.add, local.addCard, comingSoon: true),
+                  if (_methods.isNotEmpty)
+                    ..._methods.map((m) {
+                      final id = m['id'] as String? ?? '';
+                      final isAr = Localizations.localeOf(context).languageCode == 'ar';
+                      final title = isAr
+                          ? (m['labelAr'] as String? ?? id)
+                          : (m['labelEn'] as String? ?? id);
+                      final desc = isAr
+                          ? (m['descriptionAr'] as String?)
+                          : (m['descriptionEn'] as String?);
+                      final icon = id == 'sham_cash'
+                          ? Icons.phone_iphone
+                          : Icons.money;
+                      return Column(
+                        children: [
+                          _methodTile(
+                            context,
+                            icon,
+                            title,
+                            subtitle: desc,
+                            trailingDetail: id == 'sham_cash' && _shamPhone != null
+                                ? '$_shamPhone${_shamAccount != null ? ' · $_shamAccount' : ''}'
+                                : null,
+                          ),
+                          const SizedBox(height: 4),
+                        ],
+                      );
+                    })
+                  else ...[
+                    _methodTile(context, Icons.phone_iphone, local.shamCash),
+                    _methodTile(context, Icons.money, local.cash),
+                  ],
 
                   const Divider(height: 32),
 
@@ -136,6 +185,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ],
               ),
             ),
+    ),
     );
   }
 
@@ -194,14 +244,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         scrollDirection: Axis.horizontal,
                         children: [
                           _iconMethod(
-                            'Sham Cash',
+                            local.shamCash,
                             Colors.orange,
                             Icons.account_balance,
                           ),
                           const SizedBox(width: 12),
-                          _iconMethod('Cash', Colors.green, Icons.money),
+                          _iconMethod(local.cashPayment, Colors.green, Icons.money),
                           const SizedBox(width: 12),
-                          _iconMethod('Card', Colors.blue, Icons.credit_card),
+                          _iconMethod(local.cardPayment, Colors.blue, Icons.credit_card),
                         ],
                       ),
                     ),
@@ -268,12 +318,25 @@ class _PaymentScreenState extends State<PaymentScreen> {
     BuildContext context,
     IconData icon,
     String title, {
+    String? subtitle,
+    String? trailingDetail,
     bool comingSoon = false,
   }) =>
       ListTile(
     leading: Icon(icon),
     title: Text(title),
-    trailing: const Icon(Icons.chevron_right),
+    subtitle: subtitle != null || trailingDetail != null
+        ? Text(
+            [subtitle, trailingDetail].whereType<String>().join('\n'),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          )
+        : null,
+    trailing: comingSoon
+        ? Text(
+            AppLocalizations.of(context)!.comingSoon,
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+          )
+        : const Icon(Icons.check_circle_outline, color: Colors.green, size: 20),
     onTap: comingSoon
         ? () => ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 import '../models/passenger_model.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/services/rider_fcm_service.dart';
-import '../../../core/utils/media_url.dart';
+import '../../../core/utils/auth_error_messages.dart';
 import '../../rider/account/my_account_all/service/account_service.dart';
 
 enum RiderStatus { notLoggedIn, newUser, returning }
@@ -22,12 +22,14 @@ class AuthProvider extends ChangeNotifier {
 
   PassengerModel? _passenger;
   String? _token;
+  String? _localProfilePreview;
   bool _isNew = false;
   String? _error;
   bool _loading = false;
 
   PassengerModel? get passenger => _passenger;
   String? get token => _token;
+  String? get localProfilePreview => _localProfilePreview;
   bool get isNew => _isNew;
   String? get error => _error;
   bool get loading => _loading;
@@ -82,23 +84,36 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners();
         return true;
       }
-      _fail(data['message']?.toString() ?? 'Failed to send OTP');
+      _fail(data['message']?.toString() ?? authErrSendOtp);
       return false;
     } catch (e) {
-      _fail('NET[${Api.base}]: $e');
+      _fail(authErrNetwork);
       return false;
     }
   }
 
   // ─── Verify OTP ───────────────────────────────────────────
-  Future<bool> verifyOtp(String phone, String otp) async {
+  Future<bool> verifyOtp(
+    String phone,
+    String otp, {
+    List<Map<String, String>>? consents,
+  }) async {
     _begin();
     try {
+      final body = <String, dynamic>{
+        'phone': phone,
+        'otp': otp,
+        'role': 'PASSENGER',
+      };
+      if (consents != null && consents.isNotEmpty) {
+        body['consents'] = consents;
+      }
+
       final res = await http
           .post(
             Uri.parse('${Api.base}${Api.verifyOtp}'),
             headers: _h,
-            body: jsonEncode({'phone': phone, 'otp': otp, 'role': 'PASSENGER'}),
+            body: jsonEncode(body),
           )
           .timeout(const Duration(seconds: 15));
 
@@ -108,7 +123,7 @@ class AuthProvider extends ChangeNotifier {
         // الباك اند يرجع access_token مو token
         final tok = data['access_token']?.toString();
         if (tok == null) {
-          _fail('Invalid response');
+          _fail(authErrInvalidResponse);
           return false;
         }
 
@@ -128,10 +143,14 @@ class AuthProvider extends ChangeNotifier {
       }
 
       final msg = data['message'];
-      _fail(msg is List ? msg.join(', ') : msg?.toString() ?? 'Invalid OTP');
+      _fail(
+        msg is List
+            ? msg.join(', ')
+            : msg?.toString() ?? authErrInvalidOtp,
+      );
       return false;
     } catch (e) {
-      _fail('No internet connection');
+      _fail(authErrNetwork);
       return false;
     }
   }
@@ -157,31 +176,39 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners();
         return true;
       }
-      _fail('Failed to update profile');
+      _fail(authErrUpdateProfile);
       return false;
     } catch (e) {
-      _fail('No internet connection');
+      _fail(authErrNetwork);
       return false;
     }
   }
 
+  void clearLocalProfilePreview() {
+    if (_localProfilePreview == null) return;
+    _localProfilePreview = null;
+    notifyListeners();
+  }
+
   Future<bool> uploadProfilePhoto(File file) async {
     if (_token == null) return false;
-    _begin();
+    _error = null;
+    _localProfilePreview = file.path;
+    _passenger = _passenger?.copyWith(profileImage: file.path);
+    notifyListeners();
     try {
       final path = await AccountService.instance.uploadProfilePhoto(file);
       if (path == null) {
-        _fail('Failed to upload photo');
+        _error = authErrUploadPhoto;
+        notifyListeners();
         return false;
       }
-      _passenger = _passenger?.copyWith(
-        profileImage: resolveMediaUrl(path) ?? path,
-      );
-      _loading = false;
+      _passenger = _passenger?.copyWith(profileImage: path);
       notifyListeners();
       return true;
     } catch (e) {
-      _fail('No internet connection');
+      _error = authErrNetwork;
+      notifyListeners();
       return false;
     }
   }

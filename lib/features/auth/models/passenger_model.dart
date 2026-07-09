@@ -69,7 +69,7 @@ class PassengerModel {
         birthDate: j['birthDate'],
         homeAddress: j['homeAddress'],
         workAddress: j['workAddress'],
-        profileImage: resolveMediaUrl(j['profileImage']?.toString()),
+        profileImage: j['profileImage']?.toString(),
         profileCompleted: j['profileCompleted'] ?? false,
       );
 }

@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/widgets/a11y.dart';
+import '../../../../core/utils/auth_error_messages.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../features/auth/providers/auth_provider.dart';
 
@@ -75,7 +77,12 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(prov.error ?? 'Failed'),
+          content: Text(
+            localizeAuthError(
+              prov.error,
+              AppLocalizations.of(context)!,
+            ),
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -109,10 +116,12 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
   @override
   Widget build(BuildContext context) {
     final local = AppLocalizations.of(context)!;
-    return Scaffold(
+    return A11yScreen(
+      label: local.editProfile,
+      child: Scaffold(
       backgroundColor: const Color(0xfff7f7f7),
       appBar: AppBar(
-        title: Text(local.editProfile),
+        title: Semantics(header: true, child: Text(local.editProfile)),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.white,
@@ -151,7 +160,7 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
                       ),
                     ),
                     Text(
-                      'Update your personal information',
+                      local.updatePersonalInfo,
                       style: const TextStyle(color: Colors.black54),
                     ),
                   ],
@@ -229,36 +238,41 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
             child: SizedBox(
               width: double.infinity,
               height: 55,
-              child: ElevatedButton(
-                onPressed: _loading ? null : _save,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+              child: A11yButton(
+                label: local.save,
+                enabled: !_loading,
+                child: ElevatedButton(
+                  onPressed: _loading ? null : _save,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
+                  child: _loading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          local.save,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
                 ),
-                child: _loading
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Text(
-                        local.save,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
               ),
             ),
           ),
         ],
       ),
+    ),
     );
   }
 }

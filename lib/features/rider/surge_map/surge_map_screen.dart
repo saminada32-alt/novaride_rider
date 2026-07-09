@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
 import '../services/rider_service.dart';
 import '../widgets/surge_badge.dart';
@@ -84,9 +85,11 @@ class _SurgeMapScreenState extends State<SurgeMapScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context).languageCode;
-    return Scaffold(
+    return A11yScreen(
+      label: l.surgeMapTitle,
+      child: Scaffold(
       appBar: AppBar(
-        title: Text(l.surgeMapTitle),
+        title: Semantics(header: true, child: Text(l.surgeMapTitle)),
         centerTitle: true,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -142,6 +145,7 @@ class _SurgeMapScreenState extends State<SurgeMapScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 

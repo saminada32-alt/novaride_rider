@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/widgets/a11y.dart';
 import '../../l10n/app_localizations.dart';
 import '../auth/providers/auth_provider.dart';
 import '../auth/welcome/welcome_screen.dart';
@@ -70,7 +71,9 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final local = AppLocalizations.of(context)!;
-    return Scaffold(
+    return A11yScreen(
+      label: local.splashTitle,
+      child: Scaffold(
       backgroundColor: Colors.white,
       body: FadeTransition(
         opacity: _fade,
@@ -121,6 +124,7 @@ class _SplashScreenState extends State<SplashScreen>
           ),
         ),
       ),
+    ),
     );
   }
 }

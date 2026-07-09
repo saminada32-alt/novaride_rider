@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/services/rider_socket_service.dart';
@@ -129,9 +130,11 @@ class _RideChatScreenState extends State<RideChatScreen> {
     final local = AppLocalizations.of(context)!;
     final myId = _myId ?? 0;
 
-    return Scaffold(
+    return A11yScreen(
+      label: widget.title,
+      child: Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Semantics(header: true, child: Text(widget.title)),
         centerTitle: true,
       ),
       body: Column(
@@ -238,6 +241,7 @@ class _RideChatScreenState extends State<RideChatScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 }

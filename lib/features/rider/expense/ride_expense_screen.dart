@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/utils/currency_utils.dart';
+import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
 import '../models/ride_model.dart';
 import '../services/rider_service.dart';
@@ -213,10 +214,12 @@ class _RideExpensesScreenState extends State<RideExpensesScreen> {
     final payments = _byPayment.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    return Scaffold(
+    return A11yScreen(
+      label: local.rideExpenses,
+      child: Scaffold(
       backgroundColor: const Color(0xfff6f7fb),
       appBar: AppBar(
-        title: Text(local.rideExpenses),
+        title: Semantics(header: true, child: Text(local.rideExpenses)),
         centerTitle: true,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -317,6 +320,7 @@ class _RideExpensesScreenState extends State<RideExpensesScreen> {
                     ],
                   ),
                 ),
+    ),
     );
   }
 

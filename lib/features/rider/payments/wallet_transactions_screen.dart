@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/utils/currency_utils.dart';
+import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
 import '../services/rider_service.dart';
 import 'wallet_transaction.dart';
@@ -54,9 +55,11 @@ class _WalletTransactionsScreenState extends State<WalletTransactionsScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
-    return Scaffold(
+    return A11yScreen(
+      label: l.seeBalanceTransactions,
+      child: Scaffold(
       appBar: AppBar(
-        title: Text(l.seeBalanceTransactions),
+        title: Semantics(header: true, child: Text(l.seeBalanceTransactions)),
         centerTitle: true,
       ),
       body: _loading
@@ -98,10 +101,11 @@ class _WalletTransactionsScreenState extends State<WalletTransactionsScreen> {
                   : ListView.separated(
                       padding: const EdgeInsets.all(16),
                       itemCount: _items.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
                       itemBuilder: (_, i) => _tile(_items[i]),
                     ),
             ),
+    ),
     );
   }
 

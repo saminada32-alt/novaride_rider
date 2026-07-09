@@ -6,6 +6,7 @@ import '../../../core/utils/phone_utils.dart';
 import '../../../l10n/app_localizations.dart';
 import '../account/my_account_all/provider/account_provider.dart';
 import '../services/ride_safety_service.dart';
+import '../services/rider_service.dart';
 
 /// Emergency actions during an active ride.
 Future<void> showRideSafetySheet(
@@ -32,6 +33,7 @@ class _RideSafetySheet extends StatefulWidget {
 
 class _RideSafetySheetState extends State<_RideSafetySheet> {
   bool _sending = false;
+  bool _reporting = false;
 
   @override
   void initState() {
@@ -70,6 +72,92 @@ class _RideSafetySheetState extends State<_RideSafetySheet> {
       ),
     );
     if (ok) Navigator.pop(context);
+  }
+
+  Future<void> _reportIssue() async {
+    if (_reporting) return;
+    final local = AppLocalizations.of(context)!;
+    final ctrl = TextEditingController();
+    final type = await showDialog<String>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(local.reportIssue),
+        children: [
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, 'safety'),
+            child: Text(local.reportTypeSafety),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, 'driver'),
+            child: Text(local.reportTypeDriver),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, 'billing'),
+            child: Text(local.reportTypeBilling),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, 'technical'),
+            child: Text(local.reportTypeTechnical),
+          ),
+        ],
+      ),
+    );
+    if (type == null || !mounted) return;
+
+    final desc = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(local.reportIssue),
+        content: TextField(
+          controller: ctrl,
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: local.reportDescribeHint,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(local.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: Text(local.reportIssue),
+          ),
+        ],
+      ),
+    );
+    if (desc == null || desc.isEmpty || !mounted) return;
+
+    setState(() => _reporting = true);
+    try {
+      final pos = await RideSafetyService.instance.currentPosition();
+      await RiderService.instance.reportRide(
+        widget.rideId,
+        type: type,
+        description: desc,
+        lat: pos?.latitude,
+        lng: pos?.longitude,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(local.reportSubmitted),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _reporting = false);
+    }
   }
 
   @override
@@ -149,6 +237,22 @@ class _RideSafetySheetState extends State<_RideSafetySheet> {
                 ),
               ),
             ],
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: OutlinedButton.icon(
+                onPressed: _reporting ? null : _reportIssue,
+                icon: _reporting
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.flag_outlined),
+                label: Text(local.reportIssue),
+              ),
+            ),
           ],
         ),
       ),

@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../../../core/constants/api_constants.dart';
 import '../models/ride_model.dart';
 import '../payments/wallet_transaction.dart';
+import '../../../core/services/market_service.dart';
 
 class RiderService {
   RiderService._();
@@ -26,8 +27,62 @@ class RiderService {
     throw Exception(msg is List ? msg.join(', ') : msg?.toString() ?? 'Error');
   }
 
+  Map<String, dynamic> buildRidePayload({
+    required double pickupLat,
+    required double pickupLng,
+    required double dropoffLat,
+    required double dropoffLng,
+    String? pickupAddress,
+    String? dropoffAddress,
+    DateTime? scheduledAt,
+    String? vehicleType,
+    String? paymentMethod,
+    String? promoCode,
+    bool accessibilityRequired = false,
+    List<Map<String, dynamic>>? stops,
+    String? splitFarePhone,
+    int? splitFarePercent,
+    String? marketCode,
+    bool isPool = false,
+    int? poolMaxSeats,
+  }) {
+    return {
+      'pickupLat': pickupLat,
+      'pickupLng': pickupLng,
+      'dropoffLat': dropoffLat,
+      'dropoffLng': dropoffLng,
+      'pickupAddress': ?pickupAddress,
+      'dropoffAddress': ?dropoffAddress,
+      if (scheduledAt != null)
+        'scheduledAt': scheduledAt.toUtc().toIso8601String(),
+      'vehicleType': ?vehicleType,
+      'paymentMethod': ?paymentMethod,
+      if (promoCode != null && promoCode.isNotEmpty) 'promoCode': promoCode,
+      if (accessibilityRequired) 'accessibilityRequired': true,
+      if (stops != null && stops.isNotEmpty) 'stops': stops,
+      if (splitFarePhone != null && splitFarePhone.isNotEmpty)
+        'splitFarePhone': splitFarePhone,
+      'splitFarePercent': ?splitFarePercent,
+      if (marketCode != null && marketCode.isNotEmpty) 'marketCode': marketCode,
+      if (isPool) 'isPool': true,
+      if (isPool && poolMaxSeats != null) 'poolMaxSeats': poolMaxSeats,
+    };
+  }
+
+  Future<RideModel> createRideFromPayload(Map<String, dynamic> payload) async {
+    final tok = await _token();
+    if (tok == null) throw Exception('Not authenticated');
+    final res = await http
+        .post(
+          Uri.parse('${Api.base}${Api.createRide}'),
+          headers: _auth(tok),
+          body: jsonEncode(payload),
+        )
+        .timeout(const Duration(seconds: 15));
+    return RideModel.fromJson(_parse(res));
+  }
+
   // ─── Create Ride ──────────────────────────────────────────
-  // يطابق: POST /rides مع CreateRideDto
   Future<RideModel> createRide({
     required double pickupLat,
     required double pickupLng,
@@ -39,31 +94,188 @@ class RiderService {
     String? vehicleType,
     String? paymentMethod,
     String? promoCode,
+    bool accessibilityRequired = false,
+    List<Map<String, dynamic>>? stops,
+    String? splitFarePhone,
+    int? splitFarePercent,
+    bool isPool = false,
+    int? poolMaxSeats,
+  }) async {
+    return createRideFromPayload(
+      buildRidePayload(
+        pickupLat: pickupLat,
+        pickupLng: pickupLng,
+        dropoffLat: dropoffLat,
+        dropoffLng: dropoffLng,
+        pickupAddress: pickupAddress,
+        dropoffAddress: dropoffAddress,
+        scheduledAt: scheduledAt,
+        vehicleType: vehicleType,
+        paymentMethod: paymentMethod,
+        promoCode: promoCode,
+        accessibilityRequired: accessibilityRequired,
+        stops: stops,
+        splitFarePhone: splitFarePhone,
+        splitFarePercent: splitFarePercent,
+        isPool: isPool,
+        poolMaxSeats: poolMaxSeats,
+      ),
+    );
+  }
+
+  Future<RideModel> retrySearch(int rideId) async {
+    final tok = await _token();
+    if (tok == null) throw Exception('Not authenticated');
+
+    final res = await http
+        .post(
+          Uri.parse('${Api.base}${Api.rideRetrySearch(rideId)}'),
+          headers: _auth(tok),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    return RideModel.fromJson(_parse(res));
+  }
+
+  Future<List<RideModel>> getRetryableRides() async {
+    final tok = await _token();
+    if (tok == null) return [];
+
+    final res = await http
+        .get(Uri.parse('${Api.base}${Api.retryableRides}'), headers: _auth(tok))
+        .timeout(const Duration(seconds: 10));
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(res.bodyBytes));
+      final list = data is List ? data : [];
+      return list
+          .map((r) => RideModel.fromJson(Map<String, dynamic>.from(r)))
+          .toList();
+    }
+    return [];
+  }
+
+  Future<Map<String, dynamic>> getLiveRide(int rideId) async {
+    final tok = await _token();
+    if (tok == null) throw Exception('Not authenticated');
+
+    final res = await http
+        .get(
+          Uri.parse('${Api.base}${Api.rideLive(rideId)}'),
+          headers: _auth(tok),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    return _parse(res);
+  }
+
+  Future<Map<String, dynamic>> getPoolInfo(int rideId) async {
+    final tok = await _token();
+    if (tok == null) throw Exception('Not authenticated');
+
+    final res = await http
+        .get(
+          Uri.parse('${Api.base}${Api.ridePool(rideId)}'),
+          headers: _auth(tok),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    return _parse(res);
+  }
+
+  Future<void> reportRide(
+    int rideId, {
+    required String type,
+    required String description,
+    double? lat,
+    double? lng,
   }) async {
     final tok = await _token();
     if (tok == null) throw Exception('Not authenticated');
 
     final res = await http
         .post(
-          Uri.parse('${Api.base}${Api.createRide}'),
+          Uri.parse('${Api.base}${Api.rideReport(rideId)}'),
           headers: _auth(tok),
           body: jsonEncode({
-            'pickupLat': pickupLat,
-            'pickupLng': pickupLng,
-            'dropoffLat': dropoffLat,
-            'dropoffLng': dropoffLng,
-            if (pickupAddress != null) 'pickupAddress': pickupAddress,
-            if (dropoffAddress != null) 'dropoffAddress': dropoffAddress,
-            if (scheduledAt != null)
-              'scheduledAt': scheduledAt.toUtc().toIso8601String(),
-            if (vehicleType != null) 'vehicleType': vehicleType,
-            if (paymentMethod != null) 'paymentMethod': paymentMethod,
-            if (promoCode != null && promoCode.isNotEmpty) 'promoCode': promoCode,
+            'type': type,
+            'description': description,
+            'lat': ?lat,
+            'lng': ?lng,
           }),
         )
         .timeout(const Duration(seconds: 15));
 
-    return RideModel.fromJson(_parse(res));
+    _parse(res);
+  }
+
+  Future<Map<String, dynamic>> syncOfflineActions(
+    List<Map<String, dynamic>> actions,
+  ) async {
+    final tok = await _token();
+    if (tok == null) throw Exception('Not authenticated');
+
+    final res = await http
+        .post(
+          Uri.parse('${Api.base}${Api.syncOfflineRides}'),
+          headers: _auth(tok),
+          body: jsonEncode({'actions': actions}),
+        )
+        .timeout(const Duration(seconds: 30));
+
+    return _parse(res);
+  }
+
+  Future<Map<String, dynamic>> submitPrivacyDsr({
+    required String type,
+    String? details,
+    Map<String, dynamic>? rectificationPayload,
+  }) async {
+    final tok = await _token();
+    if (tok == null) throw Exception('Not authenticated');
+
+    final res = await http
+        .post(
+          Uri.parse('${Api.base}${Api.privacyDsr}'),
+          headers: _auth(tok),
+          body: jsonEncode({
+            'type': type,
+            if (details != null && details.isNotEmpty) 'details': details,
+            'rectificationPayload': ?rectificationPayload,
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    return _parse(res);
+  }
+
+  Future<List<dynamic>> getMyPrivacyRequests() async {
+    final tok = await _token();
+    if (tok == null) return [];
+
+    final res = await http
+        .get(Uri.parse('${Api.base}${Api.privacyDsrMe}'), headers: _auth(tok))
+        .timeout(const Duration(seconds: 10));
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(res.bodyBytes));
+      return data is List ? data : [];
+    }
+    return [];
+  }
+
+  Future<void> cancelPrivacyRequest(int id) async {
+    final tok = await _token();
+    if (tok == null) throw Exception('Not authenticated');
+
+    final res = await http
+        .post(
+          Uri.parse('${Api.base}${Api.privacyDsrCancel(id)}'),
+          headers: _auth(tok),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    _parse(res);
   }
 
   /// تقدير السعر الديناميكي قبل الحجز
@@ -75,28 +287,88 @@ class RiderService {
     String? vehicleType,
     DateTime? scheduledAt,
     String? promoCode,
+    List<Map<String, dynamic>>? stops,
   }) async {
     final tok = await _token();
     if (tok == null) throw Exception('Not authenticated');
 
+    if (stops != null && stops.isNotEmpty) {
+      final points = [
+        {'lat': pickupLat, 'lng': pickupLng},
+        ...stops,
+        {'lat': dropoffLat, 'lng': dropoffLng},
+      ];
+      double totalFare = 0;
+      double totalKm = 0;
+      int totalEta = 0;
+      Map<String, dynamic>? last;
+      for (var i = 0; i < points.length - 1; i++) {
+        final seg = await _estimateSegment(
+          tok,
+          pickupLat: (points[i]['lat'] as num).toDouble(),
+          pickupLng: (points[i]['lng'] as num).toDouble(),
+          dropoffLat: (points[i + 1]['lat'] as num).toDouble(),
+          dropoffLng: (points[i + 1]['lng'] as num).toDouble(),
+          vehicleType: vehicleType,
+          scheduledAt: scheduledAt,
+          promoCode: i == points.length - 2 ? promoCode : null,
+        );
+        last = seg;
+        final selected = seg['selected'] as Map<String, dynamic>? ?? {};
+        totalFare += (selected['fare'] as num?)?.toDouble() ?? 0;
+        totalKm += (seg['distanceKm'] as num?)?.toDouble() ?? 0;
+        totalEta += (seg['etaMinutes'] as num?)?.toInt() ?? 0;
+      }
+      return {
+        ...?last,
+        'distanceKm': totalKm,
+        'etaMinutes': totalEta,
+        'selected': {
+          ...(last?['selected'] as Map<String, dynamic>? ?? {}),
+          'fare': totalFare,
+        },
+        'multiStop': true,
+      };
+    }
+
+    return _estimateSegment(
+      tok,
+      pickupLat: pickupLat,
+      pickupLng: pickupLng,
+      dropoffLat: dropoffLat,
+      dropoffLng: dropoffLng,
+      vehicleType: vehicleType,
+      scheduledAt: scheduledAt,
+      promoCode: promoCode,
+    );
+  }
+
+  Future<Map<String, dynamic>> _estimateSegment(
+    String tok, {
+    required double pickupLat,
+    required double pickupLng,
+    required double dropoffLat,
+    required double dropoffLng,
+    String? vehicleType,
+    DateTime? scheduledAt,
+    String? promoCode,
+  }) async {
     final params = {
       'pickupLat': pickupLat.toString(),
       'pickupLng': pickupLng.toString(),
       'dropoffLat': dropoffLat.toString(),
       'dropoffLng': dropoffLng.toString(),
-      if (vehicleType != null) 'vehicleType': vehicleType,
-      if (scheduledAt != null) 'scheduledAt': scheduledAt.toUtc().toIso8601String(),
+      'vehicleType': ?vehicleType,
+      if (scheduledAt != null)
+        'scheduledAt': scheduledAt.toUtc().toIso8601String(),
       if (promoCode != null && promoCode.isNotEmpty) 'promoCode': promoCode,
     };
-
-    final uri = Uri.parse('${Api.base}${Api.pricingEstimate}').replace(
-      queryParameters: params,
-    );
-
+    final uri = Uri.parse(
+      '${Api.base}${Api.pricingEstimate}',
+    ).replace(queryParameters: params);
     final res = await http
         .get(uri, headers: _auth(tok))
         .timeout(const Duration(seconds: 12));
-
     return _parse(res);
   }
 
@@ -129,7 +401,10 @@ class RiderService {
     final tok = await _token();
     if (tok == null) throw Exception('Not authenticated');
     final res = await http
-        .get(Uri.parse('${Api.base}${Api.pricingSurgeMap}'), headers: _auth(tok))
+        .get(
+          Uri.parse('${Api.base}${Api.pricingSurgeMap}'),
+          headers: _auth(tok),
+        )
         .timeout(const Duration(seconds: 12));
     return _parse(res);
   }
@@ -137,10 +412,12 @@ class RiderService {
   Future<Map<String, dynamic>> getSurgeAt(double lat, double lng) async {
     final tok = await _token();
     if (tok == null) throw Exception('Not authenticated');
-    final uri = Uri.parse('${Api.base}${Api.pricingSurgeAt}').replace(
-      queryParameters: {'lat': lat.toString(), 'lng': lng.toString()},
-    );
-    final res = await http.get(uri, headers: _auth(tok)).timeout(const Duration(seconds: 10));
+    final uri = Uri.parse(
+      '${Api.base}${Api.pricingSurgeAt}',
+    ).replace(queryParameters: {'lat': lat.toString(), 'lng': lng.toString()});
+    final res = await http
+        .get(uri, headers: _auth(tok))
+        .timeout(const Duration(seconds: 10));
     return _parse(res);
   }
 
@@ -164,16 +441,16 @@ class RiderService {
       if (lat != null) 'lat': lat.toString(),
       if (lng != null) 'lng': lng.toString(),
       if (barrels != null) 'barrels': barrels.toString(),
-      if (serviceType != null) 'serviceType': serviceType,
-      if (carType != null) 'carType': carType,
+      'serviceType': ?serviceType,
+      'carType': ?carType,
       if (cars != null) 'cars': cars.toString(),
-      if (vehicleSize != null) 'vehicleSize': vehicleSize,
+      'vehicleSize': ?vehicleSize,
       if (workers != null) 'workers': workers.toString(),
     };
 
-    final uri = Uri.parse('${Api.base}${Api.pricingSpecialEstimate}').replace(
-      queryParameters: params,
-    );
+    final uri = Uri.parse(
+      '${Api.base}${Api.pricingSpecialEstimate}',
+    ).replace(queryParameters: params);
 
     final res = await http
         .get(uri, headers: _auth(tok))
@@ -232,6 +509,44 @@ class RiderService {
     return [];
   }
 
+  Future<List<RideModel>> getScheduledRides() async {
+    final tok = await _token();
+    if (tok == null) return [];
+
+    final res = await http
+        .get(
+          Uri.parse('${Api.base}${Api.myPassengerScheduledRides}'),
+          headers: _auth(tok),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(res.bodyBytes));
+      final list = data is List ? data : (data['data'] ?? []);
+      return (list as List)
+          .map((r) => RideModel.fromJson(Map<String, dynamic>.from(r)))
+          .toList();
+    }
+    return [];
+  }
+
+  Future<RideModel> rescheduleRide(int rideId, DateTime scheduledAt) async {
+    final tok = await _token();
+    if (tok == null) throw Exception('Not authenticated');
+
+    final res = await http
+        .patch(
+          Uri.parse('${Api.base}${Api.rideReschedule(rideId)}'),
+          headers: _auth(tok),
+          body: jsonEncode({
+            'scheduledAt': scheduledAt.toUtc().toIso8601String(),
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    return RideModel.fromJson(_parse(res));
+  }
+
   // ─── Wallet ───────────────────────────────────────────────
   Future<double> getWalletBalance() async {
     final tok = await _token();
@@ -267,9 +582,8 @@ class RiderService {
       final list = data is List ? data : (data['data'] ?? []);
       return (list as List)
           .map(
-            (e) => WalletTransaction.fromJson(
-              Map<String, dynamic>.from(e as Map),
-            ),
+            (e) =>
+                WalletTransaction.fromJson(Map<String, dynamic>.from(e as Map)),
           )
           .toList();
     }
@@ -311,8 +625,8 @@ class RiderService {
             'details': details,
             'location': location,
             'totalPrice': totalPrice,
-            if (lat != null) 'lat': lat,
-            if (lng != null) 'lng': lng,
+            'lat': ?lat,
+            'lng': ?lng,
           }),
         )
         .timeout(const Duration(seconds: 15));
@@ -351,7 +665,13 @@ class RiderService {
     return [];
   }
 
-  Future<void> rateRide(int rideId, int rating, {String? comment}) async {
+  Future<void> rateRide(
+    int rideId,
+    int rating, {
+    String? comment,
+    List<String>? tags,
+    double? tipAmount,
+  }) async {
     final tok = await _token();
     if (tok == null) throw Exception('Not authenticated');
 
@@ -362,6 +682,8 @@ class RiderService {
           body: jsonEncode({
             'rating': rating,
             if (comment != null && comment.isNotEmpty) 'comment': comment,
+            if (tags != null && tags.isNotEmpty) 'tags': tags,
+            if (tipAmount != null && tipAmount > 0) 'tipAmount': tipAmount,
           }),
         )
         .timeout(const Duration(seconds: 10));
@@ -377,6 +699,19 @@ class RiderService {
         .get(Uri.parse('${Api.base}${Api.paymentsConfig}'), headers: _h)
         .timeout(const Duration(seconds: 10));
     return _parse(res);
+  }
+
+  Future<List<Map<String, dynamic>>> getVehicleTypes() async {
+    final res = await http
+        .get(Uri.parse('${Api.base}${Api.pricingVehicleTypes}'), headers: _h)
+        .timeout(const Duration(seconds: 10));
+    if (res.statusCode == 200) {
+      final data = jsonDecode(utf8.decode(res.bodyBytes));
+      if (data is List) {
+        return data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      }
+    }
+    return [];
   }
 
   Future<Map<String, dynamic>> getPaymentInstructions(int rideId) async {

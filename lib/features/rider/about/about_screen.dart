@@ -1,19 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
 
-class AboutScreen extends StatelessWidget {
+class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
+
+  @override
+  State<AboutScreen> createState() => _AboutScreenState();
+}
+
+class _AboutScreenState extends State<AboutScreen> {
+  String _version = '';
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) setState(() => _version = info.version);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final local = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(local.about), centerTitle: true),
+    return A11yScreen(
+      label: local.about,
+      child: Scaffold(
+      appBar: AppBar(
+        title: Semantics(header: true, child: Text(local.about)),
+        centerTitle: true,
+      ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          // ===== HEADER IMAGE =====
           SizedBox(
             height: 250,
             child: Image.asset(
@@ -24,7 +45,6 @@ class AboutScreen extends StatelessWidget {
 
           const SizedBox(height: 24),
 
-          // ===== APP NAME =====
           Text(
             local.appName,
             textAlign: TextAlign.center,
@@ -33,9 +53,8 @@ class AboutScreen extends StatelessWidget {
 
           const SizedBox(height: 8),
 
-          // ===== VERSION =====
           Text(
-            '${local.version} 1.0.0',
+            _version.isEmpty ? local.version : '${local.version} $_version',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -45,7 +64,6 @@ class AboutScreen extends StatelessWidget {
 
           const SizedBox(height: 24),
 
-          // ===== DESCRIPTION =====
           Text(
             local.aboutDesc,
             textAlign: TextAlign.center,
@@ -54,7 +72,6 @@ class AboutScreen extends StatelessWidget {
 
           const SizedBox(height: 32),
 
-          // ===== FEATURES =====
           _featureItem(
             icon: Icons.directions_car,
             title: local.aboutFeature1Title,
@@ -77,7 +94,6 @@ class AboutScreen extends StatelessWidget {
 
           const SizedBox(height: 40),
 
-          // ===== FOOTER =====
           Text(
             local.aboutFooter,
             textAlign: TextAlign.center,
@@ -88,10 +104,10 @@ class AboutScreen extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 
-  // ===== FEATURE ITEM =====
   Widget _featureItem({
     required IconData icon,
     required String title,

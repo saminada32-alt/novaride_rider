@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/widgets/a11y.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../my_account_all/provider/account_provider.dart';
 
@@ -57,8 +58,8 @@ class _SafetyScreenState extends State<SafetyScreen> {
   Future<void> _save() async {
     if (_nameCtrl.text.trim().isEmpty || _phoneCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill all fields'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.fillAllFields),
           backgroundColor: Colors.red,
         ),
       );
@@ -80,7 +81,7 @@ class _SafetyScreenState extends State<SafetyScreen> {
         content: Text(
           ok
               ? AppLocalizations.of(context)!.savedSuccessfully
-              : 'Failed to save',
+              : AppLocalizations.of(context)!.failedToSave,
         ),
         backgroundColor: ok ? Colors.green : Colors.red,
       ),
@@ -98,8 +99,13 @@ class _SafetyScreenState extends State<SafetyScreen> {
   Widget build(BuildContext context) {
     final local = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(local.safety), centerTitle: true),
+    return A11yScreen(
+      label: local.safety,
+      child: Scaffold(
+      appBar: AppBar(
+        title: Semantics(header: true, child: Text(local.safety)),
+        centerTitle: true,
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: Colors.green))
           : SingleChildScrollView(
@@ -250,6 +256,7 @@ class _SafetyScreenState extends State<SafetyScreen> {
                 ],
               ),
             ),
+    ),
     );
   }
 }

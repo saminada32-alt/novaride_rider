@@ -1,4 +1,4 @@
-package com.example.novaride_rider
+package com.novaride.rider
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -4,12 +4,12 @@
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
-        android:label="novaride_rider"
+        android:label="NovaRide"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
          <meta-data
                 android:name="com.google.android.geo.API_KEY"
-                android:value="AIzaSyAnEp5Fl8PBczPgsL8mUFBiH_MYRBbWSKQ"/>
+                android:value="${googleMapsApiKey}"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -35,6 +35,10 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

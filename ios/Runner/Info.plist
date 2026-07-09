@@ -2,19 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-	</dict>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>NovaRide needs local network access to connect to the development server.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Novaride Driver</string>
+	<string>NovaRide</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -22,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>novaride_driver</string>
+	<string>novaride_rider</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -33,16 +26,27 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>NovaRide needs local network access to connect to the development server.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>NovaRide needs camera access to take your profile photo.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>NovaRide needs photo library access to choose your profile photo.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>NovaRide needs permission to save photos to your library.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>نحتاج موقعك لتقديم خدمة أفضل</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>نحتاج موقعك حتى أثناء استخدام التطبيق</string>
+	<string>NovaRide needs your location for ride tracking</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>NovaRide needs your location to find nearby drivers</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<key>NSLocationWhenInUseUsageDescription</key>
-<string>NovaRide needs your location to find nearby drivers</string>
-<key>NSLocationAlwaysUsageDescription</key>
-<string>NovaRide needs your location for ride tracking</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

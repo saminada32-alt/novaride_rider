@@ -1,7 +1,7 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/utils/profile_photo_picker.dart';
+import '../../../../core/widgets/a11y.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/login/login_screen.dart';
 import '../../../auth/providers/auth_provider.dart';
@@ -10,6 +10,7 @@ import '../safety/safety_account_screen.dart';
 import '../personal_info/personal_info_screen.dart';
 import '../familyprofile/familyprofile_screen.dart';
 import '../privacy/privacy_screen.dart';
+import '../../places/saved_places_screen.dart';
 import '../upcoming_trips/upcoming_trips_screen.dart';
 import '../language/language_screen.dart';
 import '../my_account_all/provider/account_provider.dart';
@@ -22,26 +23,24 @@ class MyAccountScreen extends StatefulWidget {
 }
 
 class _MyAccountScreenState extends State<MyAccountScreen> {
-  final _picker = ImagePicker();
-
   Future<void> _pickPhoto() async {
-    final picked = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
-    if (picked == null || !mounted) return;
-
-    final ok = await context.read<AuthProvider>().uploadProfilePhoto(
-      File(picked.path),
-    );
-    if (!mounted) return;
-
     final local = AppLocalizations.of(context)!;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(ok ? local.savedSuccessfully : 'Failed to upload photo'),
-        backgroundColor: ok ? Colors.green : Colors.red,
-      ),
+    await showProfilePhotoSourceSheet(
+      context,
+      cameraLabel: local.camera,
+      galleryLabel: local.gallery,
+      onPicked: (file) async {
+        final ok = await context.read<AuthProvider>().uploadProfilePhoto(file);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              ok ? local.savedSuccessfully : local.failedToUploadPhoto,
+            ),
+            backgroundColor: ok ? Colors.green : Colors.red,
+          ),
+        );
+      },
     );
   }
 
@@ -58,9 +57,11 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
     final email = user?.email ?? '';
     final phone = user?.phone ?? '';
 
-    return Scaffold(
+    return A11yScreen(
+      label: local.myAccount,
+      child: Scaffold(
       appBar: AppBar(
-        title: Text(local.myAccount),
+        title: Semantics(header: true, child: Text(local.myAccount)),
         centerTitle: true,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -85,6 +86,8 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                 children: [
                   ProfileAvatar(
                     imageUrl: user?.profileImageUrl,
+                    localPreviewPath: auth.localProfilePreview,
+                    onNetworkImageLoaded: auth.clearLocalProfilePreview,
                     name: name.isNotEmpty ? name : local.guest,
                     radius: 32,
                     showCameraBadge: true,
@@ -165,6 +168,14 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                 MaterialPageRoute(builder: (_) => const PrivacyScreen()),
               ),
             ),
+            _tile(
+              Icons.bookmark_outline,
+              local.savedPlaces,
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SavedPlacesScreen()),
+              ),
+            ),
 
             const SizedBox(height: 24),
 
@@ -204,18 +215,16 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                 context: context,
                 builder: (_) => AlertDialog(
                   title: Text(local.deleteAccount),
-                  content: const Text(
-                    'This action is irreversible. Are you sure?',
-                  ),
+                  content: Text(local.deleteAccountWarning),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancel'),
+                      child: Text(local.cancel),
                     ),
                     TextButton(
                       onPressed: () => Navigator.pop(context, true),
-                      child: const Text(
-                        'Delete',
+                      child: Text(
+                        local.deleteAccountAction,
                         style: TextStyle(color: Colors.red),
                       ),
                     ),
@@ -238,6 +247,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 

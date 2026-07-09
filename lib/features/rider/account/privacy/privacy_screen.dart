@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../core/widgets/a11y.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../core/services/legal_service.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../legal/legal_document_screen.dart';
 import '../../../splash/splash_screen.dart';
 import '../../services/rider_service.dart';
 import '../my_account_all/service/account_service.dart';
@@ -20,6 +23,125 @@ class PrivacyScreen extends StatefulWidget {
 class _PrivacyScreenState extends State<PrivacyScreen> {
   bool _exporting = false;
   bool _deleting = false;
+  bool _loadingLegal = false;
+  bool _accepting = false;
+  bool _needsConsent = false;
+  bool _loadingDsr = false;
+  bool _submittingDsr = false;
+  List<LegalDocumentView> _legalDocs = [];
+  List<dynamic> _dsrRequests = [];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadLegal();
+      _loadDsrRequests();
+    });
+  }
+
+  Future<void> _loadDsrRequests() async {
+    setState(() => _loadingDsr = true);
+    try {
+      final list = await RiderService.instance.getMyPrivacyRequests();
+      if (mounted) setState(() => _dsrRequests = list);
+    } catch (_) {}
+    if (mounted) setState(() => _loadingDsr = false);
+  }
+
+  Future<void> _submitDsr(String type) async {
+    if (_submittingDsr) return;
+    final l = AppLocalizations.of(context)!;
+    final ctrl = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.privacyRequestTitle),
+        content: TextField(
+          controller: ctrl,
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: l.privacyOptionalDetails,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.submit),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+
+    setState(() => _submittingDsr = true);
+    try {
+      await RiderService.instance.submitPrivacyDsr(
+        type: type,
+        details: ctrl.text.trim().isEmpty ? null : ctrl.text.trim(),
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l.privacyRequestSubmitted),
+        ),
+      );
+      await _loadDsrRequests();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _submittingDsr = false);
+    }
+  }
+
+  Future<void> _loadLegal() async {
+    setState(() => _loadingLegal = true);
+    try {
+      final isAr = Localizations.localeOf(context).languageCode == 'ar';
+      final docs = await LegalService.instance.fetchPassengerBundle(isAr: isAr);
+      bool needs = false;
+      try {
+        final status = await LegalService.instance.consentStatus();
+        needs = status['needsConsent'] == true;
+      } catch (_) {}
+      if (mounted) {
+        setState(() {
+          _legalDocs = docs;
+          _needsConsent = needs;
+        });
+      }
+    } catch (_) {
+      /* keep export/delete usable */
+    } finally {
+      if (mounted) setState(() => _loadingLegal = false);
+    }
+  }
+
+  Future<void> _acceptPolicies() async {
+    setState(() => _accepting = true);
+    try {
+      await LegalService.instance.acceptConsents();
+      if (!mounted) return;
+      setState(() => _needsConsent = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.registerPolicies)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _accepting = false);
+    }
+  }
 
   Future<void> _downloadData() async {
     final l = AppLocalizations.of(context)!;
@@ -92,10 +214,12 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
-    return Scaffold(
+    return A11yScreen(
+      label: l.privacy,
+      child: Scaffold(
       backgroundColor: const Color(0xfff7f7f7),
       appBar: AppBar(
-        title: Text(l.privacy),
+        title: Semantics(header: true, child: Text(l.privacy)),
         centerTitle: true,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -123,13 +247,126 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
+              if (_loadingLegal)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else
+                ..._legalDocs.map(
+                  (doc) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _card(
+                      icon: doc.slug.contains('terms')
+                          ? Icons.description_outlined
+                          : Icons.policy_outlined,
+                      title: doc.title,
+                      subtitle: doc.summary,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => LegalDocumentScreen(document: doc),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              if (_needsConsent) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _accepting ? null : _acceptPolicies,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xff16a34a),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: _accepting
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(l.registerPolicies),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              const SizedBox(height: 12),
+              Text(
+                l.yourPersonalData,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 10),
               _card(
                 icon: Icons.lock_outline,
                 title: l.yourPersonalData,
                 subtitle: l.downloadYourData,
                 onTap: () => _showDownloadSheet(context),
               ),
+              const SizedBox(height: 16),
+              Text(
+                l.privacyRequestsGdpr,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 10),
+              _card(
+                icon: Icons.download_outlined,
+                title: l.privacyAccessTitle,
+                subtitle: l.privacyAccessSubtitle,
+                onTap: _submittingDsr ? null : () => _submitDsr('access'),
+              ),
+              const SizedBox(height: 10),
+              _card(
+                icon: Icons.delete_forever_outlined,
+                title: l.privacyErasureTitle,
+                subtitle: l.privacyErasureSubtitle,
+                onTap: _submittingDsr ? null : () => _submitDsr('erasure'),
+                color: Colors.orange,
+              ),
+              if (_loadingDsr)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (_dsrRequests.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                ..._dsrRequests.take(5).map((r) {
+                  final m = r is Map ? r : <String, dynamic>{};
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${m['type'] ?? ''} — ${m['status'] ?? ''}',
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
               const SizedBox(height: 16),
               _card(
                 icon: Icons.delete_outline,
@@ -147,6 +384,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
             ),
         ],
       ),
+    ),
     );
   }
 

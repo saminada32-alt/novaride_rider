@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/utils/currency_utils.dart';
+import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
 import '../models/ride_model.dart';
 import '../services/rider_service.dart';
@@ -26,13 +27,7 @@ class _MyScheduledRidesScreenState extends State<MyScheduledRidesScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final all = await RiderService.instance.getMyRides();
-      final upcoming = all.where((r) => r.isUpcomingScheduled).toList()
-        ..sort((a, b) {
-          final ad = a.scheduledAt ?? DateTime.now();
-          final bd = b.scheduledAt ?? DateTime.now();
-          return ad.compareTo(bd);
-        });
+      final upcoming = await RiderService.instance.getScheduledRides();
       if (!mounted) return;
       setState(() {
         _rides = upcoming;
@@ -40,6 +35,67 @@ class _MyScheduledRidesScreenState extends State<MyScheduledRidesScreen> {
       });
     } catch (_) {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _reschedule(RideModel ride) async {
+    final l = AppLocalizations.of(context)!;
+    final now = DateTime.now().add(const Duration(minutes: 30));
+    final initial = ride.scheduledAt ?? now;
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initial.isAfter(now) ? initial : now,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 90)),
+    );
+    if (date == null || !mounted) return;
+
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initial),
+    );
+    if (time == null || !mounted) return;
+
+    final newAt = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
+    if (newAt.isBefore(DateTime.now().add(const Duration(minutes: 30)))) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.scheduleMinLeadTime)),
+      );
+      return;
+    }
+
+    try {
+      final updated = await RiderService.instance.rescheduleRide(ride.id, newAt);
+      if (!mounted) return;
+      setState(() {
+        final i = _rides.indexWhere((r) => r.id == ride.id);
+        if (i >= 0) _rides[i] = updated;
+        _rides.sort((a, b) {
+          final ad = a.scheduledAt ?? DateTime.now();
+          final bd = b.scheduledAt ?? DateTime.now();
+          return ad.compareTo(bd);
+        });
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l.rescheduleRideSuccess),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -103,10 +159,12 @@ class _MyScheduledRidesScreenState extends State<MyScheduledRidesScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return Scaffold(
+    return A11yScreen(
+      label: l.myScheduledRides,
+      child: Scaffold(
       backgroundColor: const Color(0xfff6f7fb),
       appBar: AppBar(
-        title: Text(l.myScheduledRides),
+        title: Semantics(header: true, child: Text(l.myScheduledRides)),
         centerTitle: true,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -119,6 +177,7 @@ class _MyScheduledRidesScreenState extends State<MyScheduledRidesScreen> {
               onRefresh: _load,
               child: _rides.isEmpty ? _emptyState(l) : _list(l),
             ),
+    ),
     );
   }
 
@@ -203,25 +262,44 @@ class _MyScheduledRidesScreenState extends State<MyScheduledRidesScreen> {
           _locRow(Icons.location_on_rounded, Colors.red,
               ride.dropoffAddress ?? l.destination),
           const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: cancelling ? null : () => _cancel(ride),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red,
-                side: BorderSide(color: Colors.red.shade200),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: cancelling ? null : () => _reschedule(ride),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.blue.shade700,
+                    side: BorderSide(color: Colors.blue.shade200),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.edit_calendar_rounded, size: 18),
+                  label: Text(l.rescheduleRideAction),
+                ),
               ),
-              icon: cancelling
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.red),
-                    )
-                  : const Icon(Icons.close_rounded, size: 18),
-              label: Text(cancelling ? l.cancelling : l.cancelRideAction),
-            ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: cancelling ? null : () => _cancel(ride),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    side: const BorderSide(color: Colors.red),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: cancelling
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.close_rounded, size: 18),
+                  label: Text(l.cancelRideAction),
+                ),
+              ),
+            ],
           ),
         ],
       ),

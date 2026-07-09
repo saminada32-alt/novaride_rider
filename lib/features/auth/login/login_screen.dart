@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:country_code_picker/country_code_picker.dart';
+import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/services/app_controller.dart';
+import '../../../core/utils/auth_error_messages.dart';
 import '../providers/auth_provider.dart';
 import '../otp/otp_screen.dart';
 
@@ -55,26 +57,24 @@ class _LoginScreenState extends State<LoginScreen>
   bool get _valid => _phoneCtrl.text.trim().length >= 7;
 
   Future<void> _send() async {
-    // ─── إصلاح: ربط رمز البلد بالرقم ────────────────────────
     final phone = '$_code${_phoneCtrl.text.trim()}';
-    final prov = context.read<AuthProvider>();
-
-    final ok = await prov.sendOtp(phone);
     if (!mounted) return;
 
-    if (ok) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => OtpScreen(
-            phone: phone,
-            isLogin: true, // ← لوجين → بعد OTP يروح Home
-          ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OtpScreen(
+          phone: phone,
+          isLogin: true,
         ),
-      );
-    } else {
-      _snack(prov.error ?? 'Error', Colors.red.shade600);
-    }
+      ),
+    );
+
+    final prov = context.read<AuthProvider>();
+    final local = AppLocalizations.of(context)!;
+    final ok = await prov.sendOtp(phone);
+    if (!mounted || ok) return;
+    _snack(localizeAuthError(prov.error, local), Colors.red.shade600);
   }
 
   void _snack(String m, Color c) => ScaffoldMessenger.of(context).showSnackBar(
@@ -93,7 +93,9 @@ class _LoginScreenState extends State<LoginScreen>
     final prov = context.watch<AuthProvider>();
     final isAr = ctrl.isArabic;
 
-    return Scaffold(
+    return A11yScreen(
+      label: local.login_title,
+      child: Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
@@ -182,22 +184,25 @@ class _LoginScreenState extends State<LoginScreen>
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
-                                    child: TextField(
-                                      controller: _phoneCtrl,
-                                      keyboardType: TextInputType.number,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                      ],
-                                      maxLength: 9,
-                                      decoration: InputDecoration(
-                                        hintText: local.phoneHint,
-                                        hintStyle: TextStyle(
-                                          color: Colors.grey[400],
+                                    child: A11yTextField(
+                                      label: local.phoneHint,
+                                      child: TextField(
+                                        controller: _phoneCtrl,
+                                        keyboardType: TextInputType.number,
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter.digitsOnly,
+                                        ],
+                                        maxLength: 9,
+                                        decoration: InputDecoration(
+                                          hintText: local.phoneHint,
+                                          hintStyle: TextStyle(
+                                            color: Colors.grey[400],
+                                          ),
+                                          border: InputBorder.none,
+                                          counterText: '',
                                         ),
-                                        border: InputBorder.none,
-                                        counterText: '',
+                                        onChanged: _onPhoneChanged,
                                       ),
-                                      onChanged: _onPhoneChanged,
                                     ),
                                   ),
                                 ],
@@ -206,36 +211,40 @@ class _LoginScreenState extends State<LoginScreen>
                               SizedBox(
                                 width: double.infinity,
                                 height: 55,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green,
-                                    disabledBackgroundColor:
-                                        Colors.green.shade200,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
+                                child: A11yButton(
+                                  label: local.loginButton,
+                                  enabled: _valid && !prov.loading,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      disabledBackgroundColor:
+                                          Colors.green.shade200,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      elevation: 0,
                                     ),
-                                    elevation: 0,
+                                    onPressed: (_valid && !prov.loading)
+                                        ? _send
+                                        : null,
+                                    child: prov.loading
+                                        ? const SizedBox(
+                                            width: 22,
+                                            height: 22,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : Text(
+                                            local.loginButton,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.white,
+                                            ),
+                                          ),
                                   ),
-                                  onPressed: (_valid && !prov.loading)
-                                      ? _send
-                                      : null,
-                                  child: prov.loading
-                                      ? const SizedBox(
-                                          width: 22,
-                                          height: 22,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      : Text(
-                                          local.loginButton,
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.white,
-                                          ),
-                                        ),
                                 ),
                               ),
                             ],
@@ -258,6 +267,7 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ],
       ),
+    ),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../rider/home/rider_home_screen.dart';
 
@@ -9,13 +10,17 @@ class IntroScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final local = AppLocalizations.of(context)!;
 
-    return Scaffold(
+    return A11yScreen(
+      label: local.introTitle,
+      child: Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
 
-        title: Row(
+        title: Semantics(
+          header: true,
+          child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
@@ -29,6 +34,7 @@ class IntroScreen extends StatelessWidget {
             const SizedBox(width: 8),
             const Icon(Icons.directions_car, color: Colors.green, size: 26),
           ],
+        ),
         ),
       ),
 
@@ -83,24 +89,27 @@ class IntroScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 height: 54,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green.shade700,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const RiderHomeScreen(),
+                child: A11yButton(
+                  label: local.startNow,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.shade700,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                    );
-                  },
-                  child: Text(
-                    local.startNow,
-                    style: const TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const RiderHomeScreen(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      local.startNow,
+                      style: const TextStyle(fontSize: 16, color: Colors.white),
+                    ),
                   ),
                 ),
               ),
@@ -108,6 +117,7 @@ class IntroScreen extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

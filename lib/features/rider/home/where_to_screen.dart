@@ -8,8 +8,10 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants/default_location.dart';
 import '../../../core/constants/maps_constants.dart';
+import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../core/services/saved_places_service.dart';
 
 class PlaceResult {
   final String address;
@@ -28,10 +30,14 @@ class _Prediction {
 }
 
 class WhereToScreen extends StatefulWidget {
-  /// موقع الالتقاط الحالي (GPS) — يُمرَّر من شاشة الهوم.
   final LatLng? pickupLocation;
+  final String? title;
 
-  const WhereToScreen({super.key, this.pickupLocation});
+  const WhereToScreen({
+    super.key,
+    this.pickupLocation,
+    this.title,
+  });
 
   @override
   State<WhereToScreen> createState() => _WhereToScreenState();
@@ -41,9 +47,9 @@ class _WhereToScreenState extends State<WhereToScreen> {
   final _ctrl = TextEditingController();
   final _focus = FocusNode();
   List<_Prediction> _preds = [];
+  List<SavedPlace> _savedPlaces = [];
   bool _busy = false;
   Timer? _timer;
-
 
   List<Map<String, dynamic>> _buildSuggestions(AppLocalizations l) {
     final user = context.read<AuthProvider>().passenger;
@@ -64,35 +70,25 @@ class _WhereToScreenState extends State<WhereToScreen> {
       });
     }
 
-    items.addAll([
-      {
-        'icon': Icons.shopping_bag_outlined,
-        'title': 'City Mall',
-        'address': 'City Mall, Damascus',
-        'lat': 33.5080,
-        'lng': 36.2800,
-      },
-      {
-        'icon': Icons.local_hospital_rounded,
-        'title': 'Hospital',
-        'address': 'Damascus Hospital',
-        'lat': 33.5160,
-        'lng': 36.2850,
-      },
-      {
-        'icon': Icons.flight_rounded,
-        'title': 'Airport',
-        'address': 'Damascus International Airport',
-        'lat': 33.4114,
-        'lng': 36.5156,
-      },
-    ]);
+    for (final p in _savedPlaces) {
+      items.add({
+        'icon': Icons.bookmark_rounded,
+        'title': p.label,
+        'address': p.address,
+        'lat': p.lat,
+        'lng': p.lng,
+      });
+    }
+
     return items;
   }
 
   @override
   void initState() {
     super.initState();
+    SavedPlacesService.instance.fetchAll().then((list) {
+      if (mounted) setState(() => _savedPlaces = list);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) => _focus.requestFocus());
   }
 
@@ -255,16 +251,18 @@ class _WhereToScreenState extends State<WhereToScreen> {
     final l = AppLocalizations.of(context)!;
     final suggestions = _buildSuggestions(l);
 
-    return Scaffold(
+    return A11yScreen(
+      label: l.whereTo,
+      child: Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
-        title: Text(
-          l.whereTo,
+        title: Semantics(header: true, child: Text(
+          widget.title ?? l.whereTo,
           style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        )),
         centerTitle: true,
       ),
       body: Column(
@@ -383,7 +381,11 @@ class _WhereToScreenState extends State<WhereToScreen> {
                       l.currentLocation,
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
-                    subtitle: Text(l.shareLocationDesc),
+                    subtitle: Text(
+                      widget.title == l.from
+                          ? l.shareLocationDesc
+                          : '${l.currentLocation} — ${l.shareLocationDesc}',
+                    ),
                     onTap: () => _useCurrentLocation(l),
                   ),
                   Padding(
@@ -433,6 +435,7 @@ class _WhereToScreenState extends State<WhereToScreen> {
             ),
         ],
       ),
+    ),
     );
   }
 }

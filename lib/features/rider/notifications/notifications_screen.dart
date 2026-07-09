@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/services/notification_inbox_service.dart';
+import '../../../core/widgets/a11y.dart';
+import '../../../core/widgets/empty_illustration.dart';
 import '../../../l10n/app_localizations.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -29,9 +31,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final local = AppLocalizations.of(context)!;
     final items = NotificationInboxService.instance.items;
 
-    return Scaffold(
+    return A11yScreen(
+      label: local.notificationsTitle,
+      child: Scaffold(
       appBar: AppBar(
-        title: Text(local.notificationsTitle),
+        title: Semantics(header: true, child: Text(local.notificationsTitle)),
         centerTitle: true,
         actions: [
           if (items.any((n) => !n.read))
@@ -47,18 +51,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: Colors.green))
           : items.isEmpty
-              ? Center(
-                  child: Text(
-                    local.notificationsEmpty,
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
+              ? EmptyIllustration(
+                  imageAsset: 'assets/images/Push notifications-bro.png',
+                  message: local.notificationsEmpty,
                 )
               : RefreshIndicator(
                   onRefresh: _refresh,
                   child: ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: items.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
                     itemBuilder: (_, i) {
                       final n = items[i];
                       return Material(
@@ -93,6 +95,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     },
                   ),
                 ),
+    ),
     );
   }
 }

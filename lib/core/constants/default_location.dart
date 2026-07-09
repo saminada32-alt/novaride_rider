@@ -1,6 +1,8 @@
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../config/app_config.dart';
 
-/// موقع افتراضي مؤقت — دمشق. عطّل [pinToDamascus] لاحقاً لاستخدام GPS.
+/// موقع افتراضي للتطوير المحلي — دمشق.
+/// في prod/staging يُستخدم GPS الفعلي لكل مناطق سوريا.
 abstract final class AppDefaultLocation {
   static const double latitude = 33.5138;
   static const double longitude = 36.2765;
@@ -9,8 +11,8 @@ abstract final class AppDefaultLocation {
   static const String pickupLabelAr = 'دمشق';
   static const String pickupLabelEn = 'Damascus';
 
-  /// `true` = التطبيق يستخدم دمشق كموقع التقاط حتى نربط GPS.
-  static const bool pinToDamascus = true;
+  /// `true` فقط في dev — يثبت الخريطة على دمشق للاختبار.
+  static bool get pinToDamascus => AppConfig.isDev;
 
   static String pickupLabel(String languageCode) =>
       languageCode == 'ar' ? pickupLabelAr : pickupLabelEn;

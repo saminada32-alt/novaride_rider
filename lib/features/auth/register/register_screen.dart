@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:provider/provider.dart';
+import '../../../core/widgets/a11y.dart';
+import '../../../core/utils/auth_error_messages.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/services/legal_service.dart';
+import '../../legal/legal_document_screen.dart';
 import '../providers/auth_provider.dart';
 import '../otp/otp_screen.dart';
 
@@ -18,6 +22,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _phoneCtrl = TextEditingController();
   String _code = '+963';
   bool _agreed = false;
+  bool _loadingPolicies = false;
+  List<LegalDocumentView> _policyDocs = [];
 
   @override
   void dispose() {
@@ -49,33 +55,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_valid) return;
 
     final phone = '$_code${_phoneCtrl.text.trim()}';
-    final prov = context.read<AuthProvider>();
-
-    // ─── أرسل OTP أولاً ──────────────────────────────────────
-    final ok = await prov.sendOtp(phone);
     if (!mounted) return;
 
-    if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(prov.error ?? 'Error'),
-          backgroundColor: Colors.red.shade600,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-      return;
-    }
-
-    // ─── روح لصفحة OTP مع بيانات التسجيل ────────────────────
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => OtpScreen(
           phone: phone,
-          isLogin: false, // ← register → بعد OTP يروح ProfileSetup
+          isLogin: false,
           registerData: {
             'name': _nameCtrl.text.trim(),
             'email': _emailCtrl.text.trim(),
@@ -83,10 +70,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       ),
     );
+
+    final prov = context.read<AuthProvider>();
+    final ok = await prov.sendOtp(phone);
+    if (!mounted || ok) return;
+
+    final local = AppLocalizations.of(context)!;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(localizeAuthError(prov.error, local)),
+        backgroundColor: Colors.red.shade600,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _loadPoliciesIfNeeded() async {
+    if (_policyDocs.isNotEmpty || _loadingPolicies) return;
+    setState(() => _loadingPolicies = true);
+    try {
+      final isAr = Localizations.localeOf(context).languageCode == 'ar';
+      final docs = await LegalService.instance.fetchPassengerBundle(isAr: isAr);
+      if (mounted) setState(() => _policyDocs = docs);
+    } catch (_) {
+      /* fallback handled in sheet */
+    } finally {
+      if (mounted) setState(() => _loadingPolicies = false);
+    }
   }
 
   void _showPolicies() {
     final l = AppLocalizations.of(context)!;
+    _loadPoliciesIfNeeded();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -124,10 +142,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
-              Text(
-                l.policiesFullText,
-                style: const TextStyle(fontSize: 15, height: 1.55),
-              ),
+              if (_loadingPolicies)
+                const Center(child: CircularProgressIndicator())
+              else if (_policyDocs.isEmpty)
+                Text(
+                  l.policiesFullText,
+                  style: const TextStyle(fontSize: 15, height: 1.55),
+                )
+              else
+                ..._policyDocs.expand((doc) => [
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          doc.title,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(doc.summary),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => LegalDocumentScreen(document: doc),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(),
+                    ]),
             ],
           ),
         ),
@@ -141,7 +184,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final prov = context.watch<AuthProvider>();
     final isAr = Directionality.of(context) == TextDirection.rtl;
 
-    return Directionality(
+    return A11yScreen(
+      label: l.registerTitle,
+      child: Directionality(
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         body: Stack(
@@ -163,9 +208,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   children: [
                     Align(
                       alignment: isAr ? Alignment.topRight : Alignment.topLeft,
-                      child: InkWell(
+                      child: A11yIconButton(
+                        label: l.back,
                         onTap: () => Navigator.pop(context),
-                        borderRadius: BorderRadius.circular(30),
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
@@ -180,12 +225,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     const SizedBox(height: 18),
-                    Text(
-                      l.registerTitle,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 30,
-                        fontWeight: FontWeight.w700,
+                    A11yHeader(
+                      label: l.registerTitle,
+                      child: Text(
+                        l.registerTitle,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 30,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 22),
@@ -208,35 +256,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           const SizedBox(height: 16),
 
                           // Phone
-                          TextFormField(
-                            controller: _phoneCtrl,
-                            keyboardType: TextInputType.number,
-                            maxLength: 9,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            decoration: InputDecoration(
-                              labelText: l.registerPhone,
-                              counterText: '',
-                              filled: true,
-                              fillColor: Colors.grey.shade100,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(18),
-                                borderSide: BorderSide.none,
+                          A11yTextField(
+                            label: l.registerPhone,
+                            child: TextFormField(
+                              controller: _phoneCtrl,
+                              keyboardType: TextInputType.number,
+                              maxLength: 9,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              decoration: InputDecoration(
+                                labelText: l.registerPhone,
+                                counterText: '',
+                                filled: true,
+                                fillColor: Colors.grey.shade100,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                  borderSide: BorderSide.none,
+                                ),
+                                prefixIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    CountryCodePicker(
+                                      onChanged: (c) =>
+                                          setState(() => _code = c.dialCode!),
+                                      initialSelection: 'SY',
+                                      padding: EdgeInsets.zero,
+                                    ),
+                                  ],
+                                ),
                               ),
-                              prefixIcon: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  CountryCodePicker(
-                                    onChanged: (c) =>
-                                        setState(() => _code = c.dialCode!),
-                                    initialSelection: 'SY',
-                                    padding: EdgeInsets.zero,
-                                  ),
-                                ],
-                              ),
+                              onChanged: _onPhoneChanged,
                             ),
-                            onChanged: _onPhoneChanged,
                           ),
                           const SizedBox(height: 16),
 
@@ -265,33 +316,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _valid
-                                    ? Colors.black
-                                    : Colors.grey.shade400,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(18),
+                          A11yButton(
+                            label: l.registerButton,
+                            enabled: _valid && !prov.loading,
+                            child: SizedBox(
+                              width: double.infinity,
+                              height: 56,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _valid
+                                      ? Colors.black
+                                      : Colors.grey.shade400,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
                                 ),
-                              ),
-                              onPressed: (_valid && !prov.loading)
-                                  ? _register
-                                  : null,
-                              child: prov.loading
-                                  ? const CircularProgressIndicator(
-                                      color: Colors.white,
-                                    )
-                                  : Text(
-                                      l.registerButton,
-                                      style: const TextStyle(
+                                onPressed: (_valid && !prov.loading)
+                                    ? _register
+                                    : null,
+                                child: prov.loading
+                                    ? const CircularProgressIndicator(
                                         color: Colors.white,
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w600,
+                                      )
+                                    : Text(
+                                        l.registerButton,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
-                                    ),
+                              ),
                             ),
                           ),
                         ],
@@ -304,22 +359,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 
   Widget _field(TextEditingController ctrl, String label, IconData icon) =>
-      TextFormField(
-        controller: ctrl,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon),
-          filled: true,
-          fillColor: Colors.grey.shade100,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide.none,
+      A11yTextField(
+        label: label,
+        child: TextFormField(
+          controller: ctrl,
+          decoration: InputDecoration(
+            labelText: label,
+            prefixIcon: Icon(icon),
+            filled: true,
+            fillColor: Colors.grey.shade100,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide.none,
+            ),
           ),
+          onChanged: (_) => setState(() {}),
         ),
-        onChanged: (_) => setState(() {}),
       );
 }

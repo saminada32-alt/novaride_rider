@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
 import '../account/safety/safety_account_screen.dart' as emergency_settings;
 import '../support/support_screen.dart';
@@ -10,8 +11,13 @@ class SafetyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final local = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(local.safety), centerTitle: true),
+    return A11yScreen(
+      label: local.safety,
+      child: Scaffold(
+      appBar: AppBar(
+        title: Semantics(header: true, child: Text(local.safety)),
+        centerTitle: true,
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -112,6 +118,7 @@ class SafetyScreen extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 

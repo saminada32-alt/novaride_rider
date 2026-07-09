@@ -1,3 +1,17 @@
+class RideWaypoint {
+  final double lat;
+  final double lng;
+  final String? address;
+
+  const RideWaypoint({required this.lat, required this.lng, this.address});
+
+  factory RideWaypoint.fromJson(Map<String, dynamic> j) => RideWaypoint(
+    lat: double.tryParse(j['lat']?.toString() ?? '0') ?? 0,
+    lng: double.tryParse(j['lng']?.toString() ?? '0') ?? 0,
+    address: j['address']?.toString(),
+  );
+}
+
 enum RideStatus {
   searching,
   scheduled,
@@ -39,6 +53,15 @@ class RideModel {
   final String? promoCode;
   final double? originalFare;
   final double? discountAmount;
+  final Map<String, dynamic>? splitFare;
+  final List<RideWaypoint> waypoints;
+  final List<Map<String, dynamic>> stopProgress;
+  final int currentStopIndex;
+  final String? rideMode;
+  final String? poolGroupId;
+  final int? poolSeatIndex;
+  final int? maxPoolSeats;
+  final bool canRetrySearch;
 
   const RideModel({
     required this.id,
@@ -69,7 +92,25 @@ class RideModel {
     this.promoCode,
     this.originalFare,
     this.discountAmount,
+    this.splitFare,
+    this.waypoints = const [],
+    this.stopProgress = const [],
+    this.currentStopIndex = 0,
+    this.rideMode,
+    this.poolGroupId,
+    this.poolSeatIndex,
+    this.maxPoolSeats,
+    this.canRetrySearch = false,
   });
+
+  bool get isPool => rideMode == 'pool' || poolGroupId != null;
+  bool get hasMultiStop => waypoints.isNotEmpty;
+
+  bool get hasSplitFare => splitFare != null && splitFare!['status'] != null;
+  bool get splitFareAccepted => splitFare?['status']?.toString() == 'accepted';
+  bool get splitFareDeclined =>
+      ['declined', 'cancelled', 'expired'].contains(splitFare?['status']?.toString());
+  bool get splitFareFriendPaid => splitFare?['friendPaid'] == true;
 
   /// رحلة مجدولة لم يحن موعدها بعد — لا تجمّد شاشة الهوم.
   bool get isUpcomingScheduled {
@@ -173,5 +214,21 @@ class RideModel {
     promoCode: j['promoCode']?.toString(),
     originalFare: double.tryParse(j['originalFare']?.toString() ?? ''),
     discountAmount: double.tryParse(j['discountAmount']?.toString() ?? ''),
+    splitFare: j['splitFare'] != null
+        ? Map<String, dynamic>.from(j['splitFare'] as Map)
+        : null,
+    waypoints: (j['waypoints'] as List<dynamic>? ?? [])
+        .map((e) => RideWaypoint.fromJson(e as Map<String, dynamic>))
+        .where((w) => w.lat.abs() > 0.01 && w.lng.abs() > 0.01)
+        .toList(),
+    stopProgress: (j['stopProgress'] as List<dynamic>? ?? [])
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList(),
+    currentStopIndex: int.tryParse(j['currentStopIndex']?.toString() ?? '0') ?? 0,
+    rideMode: j['rideMode']?.toString(),
+    poolGroupId: j['poolGroupId']?.toString(),
+    poolSeatIndex: int.tryParse(j['poolSeatIndex']?.toString() ?? ''),
+    maxPoolSeats: int.tryParse(j['maxPoolSeats']?.toString() ?? ''),
+    canRetrySearch: j['canRetrySearch'] == true,
   );
 }

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import 'core/services/app_controller.dart';
 import 'core/services/crash_reporting.dart';
+import 'core/services/network_connectivity_service.dart';
 import 'features/auth/providers/auth_provider.dart';
 import 'features/rider/account/my_account_all/provider/account_provider.dart';
 import 'features/rider/promotions/promo_provider.dart';
@@ -28,10 +29,14 @@ Future<void> main() async {
   final promoProvider = PromoProvider();
   await promoProvider.load();
 
+  final networkService = NetworkConnectivityService();
+  await networkService.start();
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: appController),
+        ChangeNotifierProvider.value(value: networkService),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => AccountProvider()),
         ChangeNotifierProvider.value(value: promoProvider),

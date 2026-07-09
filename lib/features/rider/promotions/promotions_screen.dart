@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
 import '../services/rider_service.dart';
 import 'promo_provider.dart';
@@ -68,7 +69,10 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'تم تفعيل ${result['code']} — خصم ${result['discountPercent']}%',
+                  AppLocalizations.of(context)!.promoActivated(
+                    result['code']?.toString() ?? '',
+                    result['discountPercent']?.toString() ?? '0',
+                  ),
                 ),
               ),
             ],
@@ -95,7 +99,9 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
     final local = AppLocalizations.of(context)!;
     final promo = context.watch<PromoProvider>();
 
-    return Scaffold(
+    return A11yScreen(
+      label: local.promotions,
+      child: Scaffold(
       backgroundColor: _kBg,
       body: RefreshIndicator(
         color: _kGreen,
@@ -109,10 +115,10 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
               backgroundColor: _kDark,
               foregroundColor: Colors.white,
               centerTitle: true,
-              title: Text(
+              title: Semantics(header: true, child: Text(
                 local.promotions,
                 style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
+              )),
               flexibleSpace: FlexibleSpaceBar(
                 background: Container(
                   decoration: const BoxDecoration(
@@ -235,6 +241,7 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }
@@ -296,8 +303,8 @@ class _ActivePromoCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'كود نشط للرحلة القادمة',
+                      Text(
+                        AppLocalizations.of(context)!.promoActiveNextRide,
                         style: TextStyle(
                           color: Colors.white70,
                           fontSize: 11,
@@ -342,8 +349,8 @@ class _ActivePromoCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text(
-                    'إلغاء',
+                  child: Text(
+                    AppLocalizations.of(context)!.cancel,
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -473,13 +480,13 @@ class _CodeInputCard extends StatelessWidget {
                         color: Colors.white,
                       ),
                     )
-                  : const Row(
+                  : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.check_rounded, size: 20),
-                        SizedBox(width: 8),
+                        const Icon(Icons.check_rounded, size: 20),
+                        const SizedBox(width: 8),
                         Text(
-                          'تطبيق الكود',
+                          AppLocalizations.of(context)!.promoApplyCode,
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
@@ -518,11 +525,13 @@ class _PromoTicketCard extends StatelessWidget {
     required this.onTap,
   });
 
-  String? get _expiryLabel {
+  String? _expiryLabel(BuildContext context) {
     if (expiresAt == null || expiresAt!.isEmpty) return null;
     final d = DateTime.tryParse(expiresAt!);
     if (d == null) return null;
-    return 'حتى ${d.day}/${d.month}/${d.year}';
+    return AppLocalizations.of(context)!.promoValidUntil(
+      '${d.day}/${d.month}/${d.year}',
+    );
   }
 
   @override
@@ -626,8 +635,8 @@ class _PromoTicketCard extends StatelessWidget {
                                   color: _kGreenLight,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Text(
-                                  'مفعّل',
+                                child: Text(
+                                  AppLocalizations.of(context)!.promoActivatedBadge,
                                   style: TextStyle(
                                     color: _kGreen,
                                     fontSize: 11,
@@ -655,15 +664,17 @@ class _PromoTicketCard extends StatelessWidget {
                           spacing: 6,
                           runSpacing: 4,
                           children: [
-                            if (_expiryLabel != null)
+                            if (_expiryLabel(context) != null)
                               _MetaChip(
                                 icon: Icons.schedule_rounded,
-                                label: _expiryLabel!,
+                                label: _expiryLabel(context)!,
                               ),
                             if (minFare != null && minFare! > 0)
                               _MetaChip(
                                 icon: Icons.payments_outlined,
-                                label: 'حد أدنى ${minFare!.toStringAsFixed(0)} ل.س',
+                                label: AppLocalizations.of(context)!.promoMinFare(
+                                  '${minFare!.toStringAsFixed(0)} ل.س',
+                                ),
                               ),
                           ],
                         ),
@@ -672,7 +683,7 @@ class _PromoTicketCard extends StatelessWidget {
                           Row(
                             children: [
                               Text(
-                                'اضغط للتفعيل',
+                                AppLocalizations.of(context)!.promoTapToActivate,
                                 style: TextStyle(
                                   color: _kGreen,
                                   fontSize: 12,
@@ -778,7 +789,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'اسحب للأسفل للتحديث',
+              AppLocalizations.of(context)!.promoPullRefresh,
               style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
             ),
           ],

@@ -8,15 +8,22 @@ import '../../../core/utils/currency_utils.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/ride_model.dart';
 import '../services/rider_service.dart';
+import '../../../core/services/market_service.dart';
 import '../promotions/promo_provider.dart';
 import '../widgets/surge_badge.dart';
+import '../../../core/services/ride_booking_offline.dart';
+import '../../../core/widgets/a11y.dart';
 import 'where_to_screen.dart';
+import 'rider_vehicle_options.dart';
+import 'rider_catalog_service.dart';
+import 'widgets/rider_vehicle_chips.dart';
 
 class RiderRequestSheet extends StatefulWidget {
   final LatLng? currentLocation;
   final String selectedVehicle;
   final void Function(String) onVehicleChanged;
   final void Function(RideModel) onRideCreated;
+  final ScrollController? scrollController;
 
   const RiderRequestSheet({
     super.key,
@@ -24,6 +31,7 @@ class RiderRequestSheet extends StatefulWidget {
     required this.selectedVehicle,
     required this.onVehicleChanged,
     required this.onRideCreated,
+    this.scrollController,
   });
 
   @override
@@ -31,9 +39,17 @@ class RiderRequestSheet extends StatefulWidget {
 }
 
 class _RiderRequestSheetState extends State<RiderRequestSheet> {
-  LatLng? get _pickup =>
-      widget.currentLocation ??
-      (AppDefaultLocation.pinToDamascus ? AppDefaultLocation.damascus : null);
+  LatLng? _pickupLatLng;
+  String? _pickupAddress;
+
+  @override
+  void initState() {
+    super.initState();
+    _pickupLatLng = widget.currentLocation ??
+        (AppDefaultLocation.pinToDamascus ? AppDefaultLocation.damascus : null);
+  }
+
+  LatLng? get _pickup => _pickupLatLng;
 
   bool _loading = false;
   bool _confirming = false;
@@ -42,7 +58,6 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
   double? _destLng;
   double? _fare;
   double? _distKm;
-  int? _eta;
   double _surgeMultiplier = 1.0;
   String? _surgeLabel;
   String? _surgeLevel;
@@ -50,6 +65,12 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
   double? _discountAmount;
   String? _promoCode;
   String _paymentMethod = 'cash';
+  final List<Map<String, dynamic>> _stops = [];
+  bool _splitFareEnabled = false;
+  final _splitPhoneCtrl = TextEditingController();
+  int _splitPercent = 50;
+  bool _isPool = false;
+  int _poolMaxSeats = 2;
 
   void _showLocationRequired() {
     final local = AppLocalizations.of(context)!;
@@ -61,23 +82,68 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
     );
   }
 
-  // ─── فتح WhereToScreen وانتظار النتيجة ───────────────────
-  Future<void> _openSearch() async {
-    if (_pickup == null) {
+  Future<void> _openSearch({bool pickup = false}) async {
+    if (_pickup == null && !pickup) {
       _showLocationRequired();
       return;
     }
 
+    final local = AppLocalizations.of(context)!;
+    final result = await Navigator.push<PlaceResult>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => WhereToScreen(
+          pickupLocation: _pickup ?? widget.currentLocation,
+          title: pickup ? local.from : local.whereTo,
+        ),
+      ),
+    );
+
+    if (result == null || !mounted) return;
+
+    if (pickup) {
+      setState(() {
+        _pickupLatLng = LatLng(result.lat, result.lng);
+        _pickupAddress = result.address;
+      });
+      if (_destLat != null && _destLng != null) {
+        setState(() => _loading = true);
+        await _fetchFareEstimate(_destLat!, _destLng!);
+        if (mounted) setState(() => _loading = false);
+      }
+      return;
+    }
+
+    _applyDestination(result.address, result.lat, result.lng);
+  }
+
+  @override
+  void dispose() {
+    _splitPhoneCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _addStop() async {
+    if (_pickup == null) return;
     final result = await Navigator.push<PlaceResult>(
       context,
       MaterialPageRoute(
         builder: (_) => WhereToScreen(pickupLocation: _pickup),
       ),
     );
-
     if (result == null || !mounted) return;
-
-    _applyDestination(result.address, result.lat, result.lng);
+    setState(() {
+      _stops.add({
+        'lat': result.lat,
+        'lng': result.lng,
+        'address': result.address,
+      });
+    });
+    if (_destLat != null && _destLng != null) {
+      setState(() => _loading = true);
+      await _fetchFareEstimate(_destLat!, _destLng!);
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _fetchFareEstimate(double lat, double lng) async {
@@ -89,6 +155,7 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
       dropoffLng: lng,
       vehicleType: widget.selectedVehicle,
       promoCode: context.read<PromoProvider>().code,
+      stops: _stops.isEmpty ? null : _stops,
     );
     if (!mounted) return;
 
@@ -104,7 +171,6 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
       _discountAmount = (selected['discountAmount'] as num?)?.toDouble() ??
           (promo?['discountAmount'] as num?)?.toDouble();
       _promoCode = promo?['code']?.toString();
-      _eta = (data['etaMinutes'] as num?)?.toInt();
       _surgeMultiplier = (surge?['multiplier'] as num?)?.toDouble() ?? 1.0;
       _surgeLabel = surge?['zone']?['labelAr']?.toString();
       _surgeLevel = surge?['level']?.toString();
@@ -136,9 +202,10 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
     _fetchFareEstimate(lat, lng).catchError((_) {
       if (!mounted) return;
       setState(() => _loading = false);
+      final t = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('تعذّر حساب السعر'),
+        SnackBar(
+          content: Text(t.fareEstimateFailed),
           backgroundColor: Colors.red,
         ),
       );
@@ -156,8 +223,9 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
       if (!mounted) return;
       if (locs.isEmpty) {
         setState(() => _loading = false);
+        final t = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$title — تعذّر تحديد الموقع')),
+          SnackBar(content: Text(t.locationPickFor(title))),
         );
         return;
       }
@@ -169,9 +237,10 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _loading = false);
+      final t = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('تعذّر تحديد الموقع'),
+        SnackBar(
+          content: Text(t.locationPickFailed),
           backgroundColor: Colors.red,
         ),
       );
@@ -189,6 +258,9 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
   }
 
   String _pickupLabel(BuildContext context) {
+    if (_pickupAddress?.trim().isNotEmpty == true) {
+      return _pickupAddress!.trim();
+    }
     if (AppDefaultLocation.pinToDamascus) {
       final code = Localizations.localeOf(context).languageCode;
       return AppDefaultLocation.pickupLabel(code);
@@ -212,9 +284,16 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
 
     setState(() => _loading = true);
 
+    final local = AppLocalizations.of(context)!;
     try {
       final promoCode = context.read<PromoProvider>().code;
-      final ride = await RiderService.instance.createRide(
+      final accessible = false;
+      final market = await MarketService.instance.resolve(
+        pickup.latitude,
+        pickup.longitude,
+      );
+      final paymentMethod = _splitFareEnabled ? 'sham_cash' : _paymentMethod;
+      final payload = RiderService.instance.buildRidePayload(
         pickupLat: pickup.latitude,
         pickupLng: pickup.longitude,
         dropoffLat: _destLat!,
@@ -223,14 +302,35 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
         dropoffAddress: _destination,
         vehicleType: widget.selectedVehicle,
         promoCode: promoCode,
-        paymentMethod: _paymentMethod,
+        paymentMethod: paymentMethod,
+        accessibilityRequired: accessible,
+        stops: _stops.isEmpty ? null : _stops,
+        splitFarePhone: _splitFareEnabled ? _splitPhoneCtrl.text.trim() : null,
+        splitFarePercent: _splitFareEnabled ? _splitPercent : null,
+        marketCode: market.code,
+        isPool: _isPool,
+        poolMaxSeats: _isPool ? _poolMaxSeats : null,
       );
+      final result = await RideBookingOffline.submit(payload);
       if (!mounted) return;
+      if (result.queued) {
+        Navigator.pop(context);
+        announceForAccessibility(context, local.offlineRideQueued);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(local.offlineRideQueued)),
+        );
+        return;
+      }
       if (promoCode != null) {
         await context.read<PromoProvider>().clear();
       }
-      Navigator.pop(context); // ← سكّر الشيت
-      widget.onRideCreated(ride); // ← أبلغ الـ HomeScreen
+      Navigator.pop(context);
+      if (_splitFareEnabled) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(local.splitFareInviteSent)),
+        );
+      }
+      widget.onRideCreated(result.ride!);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -247,108 +347,64 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final body = _confirming ? _buildConfirm() : _buildSearch();
+
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      padding: EdgeInsets.fromLTRB(
-        20,
-        12,
-        20,
-        MediaQuery.of(context).padding.bottom + 24,
-      ),
-      child: _confirming ? _buildConfirm() : _buildSearch(),
+      child: widget.scrollController != null
+          ? ListView(
+              controller: widget.scrollController,
+              padding: EdgeInsets.fromLTRB(
+                16,
+                8,
+                16,
+                MediaQuery.of(context).padding.bottom + 16,
+              ),
+              children: [body],
+            )
+          : Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                8,
+                16,
+                MediaQuery.of(context).padding.bottom + 16,
+              ),
+              child: body,
+            ),
     );
   }
 
-  // ════════════════════════════════════════════════════════
-  // شاشة البحث
-  // ════════════════════════════════════════════════════════
   Widget _buildSearch() {
     final local = AppLocalizations.of(context)!;
     final user = context.watch<AuthProvider>().passenger;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _handle(),
-        const SizedBox(height: 16),
-
-        Text(
-          local.letsGo,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        const SizedBox(height: 12),
+        _routeEditor(local),
+        const SizedBox(height: 14),
+        RiderVehicleChips(
+          selectedVehicle: widget.selectedVehicle,
+          vehicles: RiderCatalogService.instance.vehicles,
+          onChanged: _onVehicleTap,
+          local: local,
         ),
         const SizedBox(height: 16),
-
-        // Pickup
-        _locationRow(
-          Icons.radio_button_checked,
-          Colors.green,
-          _pickupLabel(context),
-        ),
-        const SizedBox(height: 6),
-
-        // Where To — الزر الرئيسي
-        GestureDetector(
-          onTap: _openSearch,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-            decoration: BoxDecoration(
-              color: Colors.black,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.location_on_rounded,
-                  color: Colors.red,
-                  size: 18,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    local.whereTo,
-                    style: const TextStyle(color: Colors.white, fontSize: 15),
-                  ),
-                ),
-                const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  color: Colors.white54,
-                  size: 13,
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 16),
-
-        // Vehicles
-        Row(
-          children: [
-            _vBtn('car', Icons.directions_car_filled_rounded, local.car),
-            const SizedBox(width: 10),
-            _vBtn('van', Icons.airport_shuttle_rounded, local.van),
-            const SizedBox(width: 10),
-            _vBtn('taxi', Icons.local_taxi_rounded, local.taxi),
-          ],
-        ),
-
-        const SizedBox(height: 16),
-
-        // Suggestions
         Text(
           local.suggestions,
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 13,
-            color: Colors.grey[600],
+            color: Colors.grey.shade600,
           ),
         ),
-        const SizedBox(height: 8),
-
+        const SizedBox(height: 6),
         if (user?.homeAddress?.isNotEmpty == true)
           _suggTile(
             Icons.home_rounded,
@@ -363,13 +419,104 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
             user!.workAddress!,
             onTap: () => _tapSavedPlace(local.work, user.workAddress!),
           ),
-        _suggTile(
-          Icons.shopping_bag_outlined,
-          'City Mall',
-          'City Mall, Damascus',
-          onTap: () => _applyDestination('City Mall', 33.5080, 36.2800),
-        ),
       ],
+    );
+  }
+
+  Widget _routeEditor(AppLocalizations local) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              onTap: () => _openSearch(pickup: true),
+              borderRadius: BorderRadius.circular(10),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.radio_button_checked,
+                      color: Colors.green,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _pickupLabel(context),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade800,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: Colors.grey.shade400,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 7, top: 4, bottom: 4),
+            child: Row(
+              children: [
+                Container(width: 2, height: 20, color: Colors.grey.shade300),
+              ],
+            ),
+          ),
+          Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              onTap: () => _openSearch(),
+              borderRadius: BorderRadius.circular(10),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.location_on_rounded,
+                      color: Colors.red.shade400,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        local.whereTo,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: Colors.grey.shade400,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -487,7 +634,10 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
               if (_promoCode != null && (_discountAmount ?? 0) > 0) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'خصم $_promoCode: -${CurrencyUtils.formatSyp(_discountAmount)}',
+                  AppLocalizations.of(context)!.discountPromo(
+                    _promoCode!,
+                    CurrencyUtils.formatSyp(_discountAmount),
+                  ),
                   style: const TextStyle(
                     color: Color(0xFF4ade80),
                     fontSize: 13,
@@ -510,17 +660,23 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
                 children: [
                   _chip(
                     Icons.straighten_rounded,
-                    '${_distKm?.toStringAsFixed(1) ?? '--'} km',
+                    _distKm != null
+                        ? AppLocalizations.of(context)!.distanceKmUnit(
+                            _distKm!.toStringAsFixed(1),
+                          )
+                        : '--',
                     Colors.blue,
                   ),
                   _chip(
-                    Icons.schedule_rounded,
-                    '${_eta ?? '--'} دقيقة',
-                    Colors.orange,
-                  ),
-                  _chip(
                     Icons.directions_car_rounded,
-                    widget.selectedVehicle,
+                    vehicleLabel(
+                      widget.selectedVehicle,
+                      car: AppLocalizations.of(context)!.car,
+                      van: AppLocalizations.of(context)!.van,
+                      taxi: AppLocalizations.of(context)!.taxi,
+                      accessible: AppLocalizations.of(context)!.accessibleRide,
+                      moto: AppLocalizations.of(context)!.vehicleMoto,
+                    ),
                     Colors.purple,
                   ),
                 ],
@@ -531,11 +687,14 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
 
         const SizedBox(height: 16),
 
-        Text(
-          'طريقة الدفع',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[800],
+        A11yHeader(
+          label: AppLocalizations.of(context)!.paymentMethodLabel,
+          child: Text(
+            AppLocalizations.of(context)!.paymentMethodLabel,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[800],
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -544,7 +703,7 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
             Expanded(
               child: _payOption(
                 Icons.money_rounded,
-                'كاش',
+                AppLocalizations.of(context)!.cashPayment,
                 'cash',
                 Colors.green,
               ),
@@ -553,7 +712,7 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
             Expanded(
               child: _payOption(
                 Icons.phone_android_rounded,
-                'شام كاش',
+                AppLocalizations.of(context)!.shamCashPayment,
                 'sham_cash',
                 Colors.blue,
               ),
@@ -562,9 +721,173 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
         ),
 
         const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.teal.shade50,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.teal.shade100),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.people_outline, color: Colors.teal.shade700, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.poolRideTitle,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    Text(
+                      AppLocalizations.of(context)!.poolRideSubtitle,
+                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: _isPool,
+                activeColor: Colors.teal,
+                onChanged: _loading
+                    ? null
+                    : (v) => setState(() {
+                          _isPool = v;
+                          if (v && _stops.isNotEmpty) {
+                            _stops.clear();
+                          }
+                        }),
+              ),
+            ],
+          ),
+        ),
+        if (_isPool) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text(
+                AppLocalizations.of(context)!.poolPassengersLabel,
+                style: TextStyle(color: Colors.grey[700], fontSize: 13),
+              ),
+              const Spacer(),
+              DropdownButton<int>(
+                value: _poolMaxSeats,
+                items: [2, 3, 4]
+                    .map(
+                      (n) => DropdownMenuItem(
+                        value: n,
+                        child: Text('$n'),
+                      ),
+                    )
+                    .toList(),
+                onChanged: _loading ? null : (v) => setState(() => _poolMaxSeats = v ?? 2),
+              ),
+            ],
+          ),
+        ],
+
+        const SizedBox(height: 16),
+        A11yHeader(
+          label: AppLocalizations.of(context)!.multiStopTitle,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context)!.multiStopTitle,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[800],
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _loading || _isPool ? null : _addStop,
+                icon: const Icon(Icons.add_location_alt_outlined, size: 18),
+                label: Text(AppLocalizations.of(context)!.addStop),
+              ),
+            ],
+          ),
+        ),
+        if (_stops.isNotEmpty)
+          ..._stops.asMap().entries.map((e) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  children: [
+                    const Icon(Icons.place_outlined, size: 16, color: Colors.orange),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        e.value['address']?.toString() ??
+                            AppLocalizations.of(context)!
+                                .multiStopNumber(e.key + 1),
+                        style: const TextStyle(fontSize: 13),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _loading
+                          ? null
+                          : () {
+                              setState(() => _stops.removeAt(e.key));
+                              if (_destLat != null && _destLng != null) {
+                                _fetchFareEstimate(_destLat!, _destLng!);
+                              }
+                            },
+                      icon: const Icon(Icons.close, size: 18),
+                      tooltip: AppLocalizations.of(context)!.removeStop,
+                    ),
+                  ],
+                ),
+              )),
+
+        const SizedBox(height: 12),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(AppLocalizations.of(context)!.splitFareTitle),
+          subtitle: Text(AppLocalizations.of(context)!.splitFareHint),
+          value: _splitFareEnabled,
+          onChanged: _loading
+              ? null
+              : (v) => setState(() {
+                  _splitFareEnabled = v;
+                  if (v) _paymentMethod = 'sham_cash';
+                }),
+        ),
+        if (_splitFareEnabled) ...[
+          Semantics(
+            label: AppLocalizations.of(context)!.splitFarePhone,
+            textField: true,
+            child: TextField(
+              controller: _splitPhoneCtrl,
+              keyboardType: TextInputType.phone,
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.splitFarePhone,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(AppLocalizations.of(context)!.splitFarePercent),
+          Slider(
+            value: _splitPercent.toDouble(),
+            min: 10,
+            max: 90,
+            divisions: 8,
+            label: '$_splitPercent%',
+            onChanged: _loading
+                ? null
+                : (v) => setState(() => _splitPercent = v.round()),
+          ),
+        ],
+
+        const SizedBox(height: 16),
 
         // ─── زر التأكيد ─────────────────────────────────
-        SizedBox(
+        A11yButton(
+          label: AppLocalizations.of(context)!.confirmRide,
+          child: SizedBox(
           width: double.infinity,
           height: 56,
           child: ElevatedButton(
@@ -586,18 +909,18 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
                       strokeWidth: 2.5,
                     ),
                   )
-                : const Row(
+                : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.check_circle_outline_rounded,
                         color: Colors.white,
                         size: 20,
                       ),
-                      SizedBox(width: 10),
+                      const SizedBox(width: 10),
                       Text(
-                        'تأكيد الرحلة',
-                        style: TextStyle(
+                        AppLocalizations.of(context)!.confirmRide,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 17,
@@ -606,6 +929,7 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
                     ],
                   ),
           ),
+        ),
         ),
 
         const SizedBox(height: 8),
@@ -703,38 +1027,6 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
       ],
     ),
   );
-
-  Widget _vBtn(String type, IconData icon, String label) {
-    final sel = widget.selectedVehicle == type;
-    return GestureDetector(
-      onTap: () => _onVehicleTap(type),
-      child: Column(
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: sel ? Colors.black : Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              icon,
-              color: sel ? Colors.white : Colors.black,
-              size: 24,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: sel ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _suggTile(
     IconData icon,

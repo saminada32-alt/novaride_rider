@@ -8,12 +8,14 @@ import '../../../core/widgets/profile_avatar.dart';
 import '../account/my_account_all/my_account_screen.dart';
 import '../payments/payments_screen.dart';
 import '../promotions/promotions_screen.dart';
-import '../subscriptions/subscriptions_screen.dart';
+import '../subscriptions/rider_benefits_screen.dart';
 import '../rides/my_rides_screen.dart';
 import '../safety/safety_screen.dart';
 import '../support/support_screen.dart';
 import '../about/about_screen.dart';
 import '../notifications/notifications_screen.dart';
+import '../split_fare/split_fare_invites_screen.dart';
+import '../referrals/referral_screen.dart';
 import '../expense/ride_expense_screen.dart';
 import '../water_tanker/water_tanker_screen.dart';
 import '../car_wash/car_wash_screen.dart';
@@ -25,7 +27,8 @@ class RiderMenuSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final local = AppLocalizations.of(context)!;
-    final user = context.watch<AuthProvider>().passenger;
+    final auth = context.watch<AuthProvider>();
+    final user = auth.passenger;
 
     final name = [
       user?.firstName,
@@ -72,6 +75,8 @@ class RiderMenuSheet extends StatelessWidget {
                               backgroundColor: Colors.transparent,
                               child: ProfileAvatar(
                                 imageUrl: user?.profileImageUrl,
+                                localPreviewPath: auth.localProfilePreview,
+                                onNetworkImageLoaded: auth.clearLocalProfilePreview,
                                 name: name.isNotEmpty ? name : local.guest,
                                 radius: 30,
                               ),
@@ -115,14 +120,24 @@ class RiderMenuSheet extends StatelessWidget {
 
                     _section([
                       RiderMenuItem(
+                        icon: Icons.person_outline,
+                        title: local.myAccount,
+                        onTap: () => _go(context, const MyAccountScreen()),
+                      ),
+                      RiderMenuItem(
                         icon: Icons.notifications_outlined,
                         title: local.notificationsTitle,
                         onTap: () => _go(context, const NotificationsScreen()),
                       ),
                       RiderMenuItem(
-                        icon: Icons.person_outline,
-                        title: local.myAccount,
-                        onTap: () => _go(context, const MyAccountScreen()),
+                        icon: Icons.people_outline,
+                        title: local.splitFareInvitesTitle,
+                        onTap: () => _go(context, const SplitFareInvitesScreen()),
+                      ),
+                      RiderMenuItem(
+                        icon: Icons.card_giftcard_outlined,
+                        title: local.referralTitle,
+                        onTap: () => _go(context, const ReferralScreen()),
                       ),
                       RiderMenuItem(
                         icon: Icons.payment,
@@ -157,9 +172,11 @@ class RiderMenuSheet extends StatelessWidget {
 
                     _section([
                       RiderMenuItem(
-                        icon: Icons.subscriptions_outlined,
-                        title: local.subscriptions,
-                        onTap: () => _go(context, const SubscriptionsScreen()),
+                        icon: Icons.workspace_premium_outlined,
+                        title: Localizations.localeOf(context).languageCode == 'ar'
+                            ? 'المزايا والعروض'
+                            : 'Benefits & offers',
+                        onTap: () => _go(context, const RiderBenefitsScreen()),
                       ),
                       RiderMenuItem(
                         icon: Icons.history,

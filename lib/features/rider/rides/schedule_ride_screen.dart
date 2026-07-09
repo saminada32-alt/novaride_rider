@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
@@ -15,6 +16,9 @@ import '../services/rider_service.dart';
 import '../promotions/promo_provider.dart';
 import '../models/ride_model.dart';
 import '../widgets/surge_badge.dart';
+import '../widgets/ride_booking_options.dart';
+import '../../../core/services/ride_booking_offline.dart';
+import '../../../core/widgets/a11y.dart';
 import 'my_scheduled_rides_screen.dart';
 import '../../../core/constants/maps_constants.dart';
 
@@ -37,6 +41,9 @@ class _ScheduleRideScreenState extends State<ScheduleRideScreen>
   DateTime? _scheduledAt;
 
   bool _loading = false;
+  String _vehicleType = 'car';
+  String _paymentMethod = 'cash';
+  bool _accessibilityRequired = false;
   bool _mapExpanded = false;
   bool _selectingOnMap = false; // وضع الاختيار من الخريطة
 
@@ -115,7 +122,7 @@ class _ScheduleRideScreenState extends State<ScheduleRideScreen>
       if (!serviceEnabled) {
         // على الـ simulator الـ location مو enabled دايماً
         // حط موقع افتراضي
-        if (mounted)
+        if (mounted) {
           setState(() {
             _currentLatLng = const LatLng(33.5138, 36.2765);
             _pickupLatLng = _currentLatLng;
@@ -124,6 +131,7 @@ class _ScheduleRideScreenState extends State<ScheduleRideScreen>
               _reverseGeocode(_currentLatLng!, isPickup: true);
             }
           });
+        }
         return;
       }
 
@@ -165,12 +173,13 @@ class _ScheduleRideScreenState extends State<ScheduleRideScreen>
       _mapCtrl?.animateCamera(CameraUpdate.newLatLngZoom(_currentLatLng!, 15));
     } catch (e) {
       // إذا فشل → موقع افتراضي
-      if (mounted)
+      if (mounted) {
         setState(() {
           _currentLatLng = const LatLng(33.5138, 36.2765);
           _pickupLatLng = _currentLatLng;
           _pickupAddress = 'Current Location';
         });
+      }
     }
   }
 
@@ -188,10 +197,11 @@ class _ScheduleRideScreenState extends State<ScheduleRideScreen>
         final addr = data['results'][0]['formatted_address'] as String;
         if (!mounted) return;
         setState(() {
-          if (isPickup)
+          if (isPickup) {
             _pickupAddress = addr;
-          else
+          } else {
             _dropoffAddress = addr;
+          }
         });
       }
     } catch (_) {}
@@ -348,12 +358,15 @@ class _ScheduleRideScreenState extends State<ScheduleRideScreen>
     }
     setState(() => _estimating = true);
     try {
+      final promoCode = context.read<PromoProvider>().code;
       final est = await RiderService.instance.estimateFare(
         pickupLat: _pickupLatLng!.latitude,
         pickupLng: _pickupLatLng!.longitude,
         dropoffLat: _dropoffLatLng!.latitude,
         dropoffLng: _dropoffLatLng!.longitude,
         scheduledAt: _scheduledAt,
+        vehicleType: _accessibilityRequired ? 'wheelchair_accessible' : _vehicleType,
+        promoCode: promoCode,
       );
       if (!mounted) return;
       setState(() => _estimate = est);
@@ -378,9 +391,10 @@ class _ScheduleRideScreenState extends State<ScheduleRideScreen>
     setState(() => _loading = true);
     HapticFeedback.mediumImpact();
 
+    final local = AppLocalizations.of(context)!;
     try {
       final promoCode = context.read<PromoProvider>().code;
-      final ride = await RiderService.instance.createRide(
+      final payload = RiderService.instance.buildRidePayload(
         pickupLat: _pickupLatLng?.latitude ?? 0,
         pickupLng: _pickupLatLng?.longitude ?? 0,
         dropoffLat: _dropoffLatLng!.latitude,
@@ -389,17 +403,77 @@ class _ScheduleRideScreenState extends State<ScheduleRideScreen>
         dropoffAddress: _dropoffAddress,
         scheduledAt: _scheduledAt,
         promoCode: promoCode,
+        vehicleType: _accessibilityRequired ? 'wheelchair_accessible' : _vehicleType,
+        paymentMethod: _paymentMethod,
+        accessibilityRequired: _accessibilityRequired,
       );
+      final result = await RideBookingOffline.submit(payload);
       if (!mounted) return;
-      if (promoCode != null) {
+      if (promoCode != null && !result.queued) {
         await context.read<PromoProvider>().clear();
       }
-      _showSuccess(ride);
+      if (result.queued) {
+        announceForAccessibility(context, local.offlineScheduledRideQueued);
+        _showQueuedSuccess();
+        return;
+      }
+      _showSuccess(result.ride!);
     } catch (e) {
-      if (mounted) _snack(e.toString(), Colors.red);
+      if (mounted) {
+        _snack(e.toString().replaceAll('Exception: ', ''), Colors.red);
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  void _showQueuedSuccess() {
+    final local = AppLocalizations.of(context)!;
+    HapticFeedback.mediumImpact();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Semantics(
+        scopesRoute: true,
+        namesRoute: true,
+        label: local.offlineScheduledRideQueued,
+        child: Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.cloud_off_rounded, size: 48, color: Colors.orange),
+                const SizedBox(height: 16),
+                Text(
+                  local.offlineScheduledRideQueued,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  local.yourdriver,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.pop(context);
+                    },
+                    child: Text(local.done),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   // ─── Success Dialog ───────────────────────────────────────────
@@ -455,7 +529,7 @@ class _ScheduleRideScreenState extends State<ScheduleRideScreen>
                 ),
               const SizedBox(height: 8),
               Text(
-                local.ride + ' #${ride.id}',
+                local.rideIdLabel(ride.id),
                 style: TextStyle(color: Colors.grey[500]),
               ),
               const SizedBox(height: 8),
@@ -498,24 +572,8 @@ class _ScheduleRideScreenState extends State<ScheduleRideScreen>
 
   // ─── Helpers ──────────────────────────────────────────────────
   String _fmtDate(DateTime d) {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    final h = d.hour.toString().padLeft(2, '0');
-    final m = d.minute.toString().padLeft(2, '0');
-    return '${days[d.weekday - 1]}, ${d.day} ${months[d.month - 1]} · $h:$m';
+    final locale = Localizations.localeOf(context).toString();
+    return DateFormat('EEE, d MMM · HH:mm', locale).format(d);
   }
 
   bool get _valid => _scheduledAt != null && _dropoffLatLng != null;
@@ -538,10 +596,12 @@ class _ScheduleRideScreenState extends State<ScheduleRideScreen>
     final local = AppLocalizations.of(context)!;
     final user = context.watch<AuthProvider>().passenger;
 
-    return Scaffold(
+    return A11yScreen(
+      label: local.scheduleRide,
+      child: Scaffold(
       backgroundColor: const Color(0xfff6f7fb),
       appBar: AppBar(
-        title: Text(local.scheduleRide),
+        title: Semantics(header: true, child: Text(local.scheduleRide)),
         centerTitle: true,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -1009,8 +1069,29 @@ class _ScheduleRideScreenState extends State<ScheduleRideScreen>
               const SizedBox(height: 16),
             ],
 
+            if (_valid) ...[
+              RideBookingOptions(
+                selectedVehicle: _vehicleType,
+                paymentMethod: _paymentMethod,
+                accessibilityRequired: _accessibilityRequired,
+                onVehicleChanged: (v) {
+                  setState(() => _vehicleType = v);
+                  _fetchEstimate();
+                },
+                onPaymentChanged: (p) => setState(() => _paymentMethod = p),
+                onAccessibilityChanged: (a) {
+                  setState(() => _accessibilityRequired = a);
+                  _fetchEstimate();
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+
             // ─── 6. CONFIRM BUTTON ─────────────────────────────────
-            SizedBox(
+            A11yButton(
+              label: local.confirmRide,
+              enabled: _valid && !_loading,
+              child: SizedBox(
               width: double.infinity,
               height: 58,
               child: AnimatedContainer(
@@ -1071,11 +1152,13 @@ class _ScheduleRideScreenState extends State<ScheduleRideScreen>
                 ),
               ),
             ),
+            ),
 
             const SizedBox(height: 32),
           ],
         ),
       ),
+    ),
     );
   }
 

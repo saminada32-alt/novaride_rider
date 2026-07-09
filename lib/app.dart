@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
 import 'core/navigation/app_navigator.dart';
 import 'core/services/app_controller.dart';
+import 'core/widgets/connectivity_overlay.dart';
 import 'core/services/notification_inbox_service.dart';
 import 'core/services/rider_fcm_service.dart';
 import 'features/splash/splash_screen.dart';
@@ -47,7 +48,7 @@ class _MyAppState extends State<MyApp> {
           textDirection: ctrl.locale.languageCode == 'ar'
               ? TextDirection.rtl
               : TextDirection.ltr,
-          child: child!,
+          child: ConnectivityOverlay(child: child!),
         );
       },
       home: const SplashScreen(),
