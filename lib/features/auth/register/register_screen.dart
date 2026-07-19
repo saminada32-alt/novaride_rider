@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:provider/provider.dart';
 import '../../../core/widgets/a11y.dart';
-import '../../../core/utils/auth_send_guard.dart';
 import '../../../core/utils/auth_error_messages.dart';
 import '../../../core/utils/phone_utils.dart';
 import '../../../l10n/app_localizations.dart';
@@ -63,7 +62,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final prov = context.read<AuthProvider>();
     final local = AppLocalizations.of(context)!;
 
-    final ok = await withMinAuthLoading(prov.sendOtp(phone));
+    final ok = await prov.sendOtp(phone);
 
     if (!mounted) return;
     setState(() => _sending = false);

@@ -99,16 +99,21 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
       _currentPosition = AppDefaultLocation.damascus;
     }
     _initLocation();
-    _checkActiveRide();
-    Future.microtask(_checkRetryableRides);
     _loadMapIcons();
-    _refreshLocalSurge();
-    RiderCatalogService.instance.ensureLoaded().then((_) {
-      if (!mounted) return;
-      setState(() => _vehicles = RiderCatalogService.instance.vehicles);
-    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      showLegalConsentDialogIfNeeded(context);
+      _checkActiveRide();
+      Future.microtask(_checkRetryableRides);
+      _refreshLocalSurge();
+      RiderCatalogService.instance.ensureLoaded().then((_) {
+        if (!mounted) return;
+        setState(() => _vehicles = RiderCatalogService.instance.vehicles);
+      });
+      Future.delayed(const Duration(seconds: 2), () {
+        if (!mounted) return;
+        showLegalConsentDialogIfNeeded(context);
+      });
+      if (_activeRide == null) _loadNearbyDrivers();
+      RiderSocketService.instance.connect();
     });
     _nearbyTimer = Timer.periodic(const Duration(seconds: 8), (_) {
       if (_activeRide == null) _loadNearbyDrivers();
@@ -117,11 +122,6 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
 
     _homeSheetController.addListener(_onHomeSheetSizeChanged);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_activeRide == null) _loadNearbyDrivers();
-    });
-
-    RiderSocketService.instance.connect();
     RiderSocketService.instance.onTripEvent = (data) {
       if (!mounted) return;
 

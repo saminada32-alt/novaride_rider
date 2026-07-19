@@ -6,7 +6,6 @@ import 'package:country_code_picker/country_code_picker.dart';
 import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/services/app_controller.dart';
-import '../../../core/utils/auth_send_guard.dart';
 import '../../../core/utils/auth_error_messages.dart';
 import '../../../core/utils/phone_utils.dart';
 import '../providers/auth_provider.dart';
@@ -70,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen>
     final prov = context.read<AuthProvider>();
     final local = AppLocalizations.of(context)!;
 
-    final ok = await withMinAuthLoading(prov.sendLoginOtp(phone));
+    final ok = await prov.sendLoginOtp(phone);
 
     if (!mounted) return;
     setState(() => _sending = false);

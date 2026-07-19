@@ -49,7 +49,7 @@ class AuthProvider extends ChangeNotifier {
 
       _token = tok;
 
-      final res = await ResilientHttp.get(
+      final res = await ResilientHttp.sessionGet(
         Uri.parse('${Api.base}${Api.passengerMe}'),
         headers: {..._h, 'Authorization': 'Bearer $tok'},
       );

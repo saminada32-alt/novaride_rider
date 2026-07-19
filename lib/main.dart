@@ -19,13 +19,13 @@ Future<void> _fcmBackground(RemoteMessage msg) async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  await Firebase.initializeApp();
-  await CrashReporting.init();
   FirebaseMessaging.onBackgroundMessage(_fcmBackground);
 
   final appController = AppController();
-  await appController.loadLocale();
+  await Future.wait([
+    Firebase.initializeApp(),
+    appController.loadLocale(),
+  ]);
 
   final promoProvider = PromoProvider();
   final networkService = NetworkConnectivityService();

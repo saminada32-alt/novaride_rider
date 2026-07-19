@@ -217,6 +217,7 @@ class _OtpScreenState extends State<OtpScreen> {
                   _otp = v;
                   _isError = false;
                 }),
+                onCompleted: _verify,
               ),
               const SizedBox(height: 24),
               SizedBox(

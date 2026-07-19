@@ -23,7 +23,7 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 700),
     );
     _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeIn);
     _ctrl.forward();
@@ -37,34 +37,26 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _check() async {
-    final results = await Future.wait([
-      context.read<AuthProvider>().checkStatus(),
-      Future.delayed(const Duration(milliseconds: 500)),
-    ]);
+    final status = await context.read<AuthProvider>().checkStatus();
     if (!mounted) return;
-
-    final status = results[0] as RiderStatus;
 
     switch (status) {
       case RiderStatus.returning:
-        // مستخدم موجود وملف مكتمل → هوم مباشرة
-        _go(const RiderHomeScreen());
+        _go(const RiderHomeScreen(), fast: true);
         break;
       case RiderStatus.newUser:
-        // مسجّل بس ما أكمل الملف
         _go(const IntroScreen());
         break;
       case RiderStatus.notLoggedIn:
-        // جديد أو مو مسجّل
         _go(const WelcomeScreen());
         break;
     }
   }
 
-  void _go(Widget w) => Navigator.pushReplacement(
+  void _go(Widget w, {bool fast = false}) => Navigator.pushReplacement(
     context,
     PageRouteBuilder(
-      transitionDuration: const Duration(milliseconds: 500),
+      transitionDuration: Duration(milliseconds: fast ? 150 : 200),
       pageBuilder: (_, _, _) => w,
       transitionsBuilder: (_, a, _, c) => FadeTransition(opacity: a, child: c),
     ),
