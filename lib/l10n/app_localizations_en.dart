@@ -56,6 +56,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get failedToSendOtp => 'Failed to send verification code';
 
   @override
+  String get networkSlowRetry => 'Network is slow — please try again';
+
+  @override
+  String get accountNotRegistered => 'This number is not registered. Please create a new account.';
+
+  @override
+  String get accountNotRegisteredTitle => 'Not registered';
+
+  @override
   String get invalidResponse => 'Invalid server response';
 
   @override

@@ -4,6 +4,7 @@ import '../../l10n/app_localizations.dart';
 const authErrNetwork = '@@auth:network@@';
 const authErrInvalidOtp = '@@auth:invalid_otp@@';
 const authErrSendOtp = '@@auth:send_otp@@';
+const authErrAccountNotFound = '@@auth:account_not_found@@';
 const authErrInvalidResponse = '@@auth:invalid_response@@';
 const authErrUpdateProfile = '@@auth:update_profile@@';
 const authErrUploadPhoto = '@@auth:upload_photo@@';
@@ -12,11 +13,13 @@ String localizeAuthError(String? raw, AppLocalizations t) {
   if (raw == null || raw.isEmpty) return t.actionFailed;
   switch (raw) {
     case authErrNetwork:
-      return t.noInternetConnection;
+      return t.networkSlowRetry;
     case authErrInvalidOtp:
       return t.invalidOtp;
     case authErrSendOtp:
       return t.failedToSendOtp;
+    case authErrAccountNotFound:
+      return t.accountNotRegistered;
     case authErrInvalidResponse:
       return t.invalidResponse;
     case authErrUpdateProfile:
@@ -27,10 +30,25 @@ String localizeAuthError(String? raw, AppLocalizations t) {
       break;
   }
   final msg = raw.replaceFirst(RegExp(r'^Exception:\s*'), '');
-  if (msg.startsWith('NET[')) return t.noInternetConnection;
-  if (msg.toLowerCase().contains('invalid otp') ||
-      msg.toLowerCase().contains('otp')) {
+  final lower = msg.toLowerCase();
+  if (msg.startsWith('NET[')) return t.networkSlowRetry;
+  if (lower.contains('invalid') && lower.contains('otp')) {
+    return 'رمز غير صحيح — استخدم آخر SMS';
+  }
+  if (lower.contains('otp')) {
     return t.invalidOtp;
+  }
+  if (lower.contains('timeout') || msg.contains('مهلة')) {
+    return t.networkSlowRetry;
+  }
+  if (lower.contains('sms') || msg.contains('SMS_DELIVERY')) {
+    return t.failedToSendOtp;
+  }
+  if (lower.contains('account not registered')) {
+    return t.accountNotRegistered;
+  }
+  if (lower.contains('legal consent')) {
+    return t.legalText;
   }
   return msg.isEmpty ? t.actionFailed : msg;
 }

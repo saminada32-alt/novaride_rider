@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:provider/provider.dart';
 import '../../../core/widgets/a11y.dart';
+import '../../../core/utils/auth_send_guard.dart';
 import '../../../core/utils/auth_error_messages.dart';
+import '../../../core/utils/phone_utils.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/services/legal_service.dart';
 import '../../legal/legal_document_screen.dart';
@@ -23,6 +25,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String _code = '+963';
   bool _agreed = false;
   bool _loadingPolicies = false;
+  bool _sending = false;
   List<LegalDocumentView> _policyDocs = [];
 
   @override
@@ -35,6 +38,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _onPhoneChanged(String v) {
     String c = v.replaceAll(RegExp(r'\D'), '');
+    if (c.startsWith('963')) c = c.substring(3);
     if (c.startsWith('0')) c = c.substring(1);
     if (c.length > 9) c = c.substring(0, 9);
     if (c != v) {
@@ -52,10 +56,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _agreed;
 
   Future<void> _register() async {
-    if (!_valid) return;
+    if (!_valid || _sending) return;
+    setState(() => _sending = true);
 
-    final phone = '$_code${_phoneCtrl.text.trim()}';
+    final phone = buildAuthPhone(_code, _phoneCtrl.text.trim());
+    final prov = context.read<AuthProvider>();
+    final local = AppLocalizations.of(context)!;
+
+    final ok = await withMinAuthLoading(prov.sendOtp(phone));
+
     if (!mounted) return;
+    setState(() => _sending = false);
+
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(localizeAuthError(prov.error, local)),
+          backgroundColor: Colors.red.shade600,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      return;
+    }
 
     Navigator.push(
       context,
@@ -67,22 +92,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             'name': _nameCtrl.text.trim(),
             'email': _emailCtrl.text.trim(),
           },
-        ),
-      ),
-    );
-
-    final prov = context.read<AuthProvider>();
-    final ok = await prov.sendOtp(phone);
-    if (!mounted || ok) return;
-
-    final local = AppLocalizations.of(context)!;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(localizeAuthError(prov.error, local)),
-        backgroundColor: Colors.red.shade600,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
         ),
       ),
     );
@@ -318,7 +327,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                           A11yButton(
                             label: l.registerButton,
-                            enabled: _valid && !prov.loading,
+                            enabled: _valid && !_sending,
                             child: SizedBox(
                               width: double.infinity,
                               height: 56,
@@ -331,10 +340,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     borderRadius: BorderRadius.circular(18),
                                   ),
                                 ),
-                                onPressed: (_valid && !prov.loading)
-                                    ? _register
-                                    : null,
-                                child: prov.loading
+                                onPressed: (_valid && !_sending) ? _register : null,
+                                child: _sending
                                     ? const CircularProgressIndicator(
                                         color: Colors.white,
                                       )

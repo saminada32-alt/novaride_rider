@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -27,10 +28,9 @@ Future<void> main() async {
   await appController.loadLocale();
 
   final promoProvider = PromoProvider();
-  await promoProvider.load();
-
   final networkService = NetworkConnectivityService();
-  await networkService.start();
+  unawaited(promoProvider.load());
+  unawaited(networkService.start());
 
   runApp(
     MultiProvider(

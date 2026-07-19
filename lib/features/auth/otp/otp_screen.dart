@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/widgets/a11y.dart';
+import '../../../core/widgets/otp_code_input.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/services/legal_service.dart';
 import '../../../core/utils/auth_error_messages.dart';
 import '../providers/auth_provider.dart';
 import '../profile_setup/profile_setup_screen.dart';
+import '../intro/intro_screen.dart';
 import '../../rider/home/rider_home_screen.dart';
 
 class OtpScreen extends StatefulWidget {
@@ -27,27 +29,23 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-  final _otpCtrl = TextEditingController();
-  final _otpFocus = FocusNode();
+  final _otpKey = GlobalKey<OtpCodeInputState>();
   Timer? _timer;
   int _sec = 60;
   bool _isError = false;
   bool _verifying = false;
+  int _verifySeq = 0;
+  String _otp = '';
 
   @override
   void initState() {
     super.initState();
     _startTimer();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _otpFocus.requestFocus();
-    });
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-    _otpCtrl.dispose();
-    _otpFocus.dispose();
     super.dispose();
   }
 
@@ -63,50 +61,57 @@ class _OtpScreenState extends State<OtpScreen> {
     });
   }
 
-  bool get _complete => RegExp(r'^\d{6}$').hasMatch(_otpCtrl.text);
+  bool get _complete => _otp.length == 6;
 
   void _clear() {
-    _otpCtrl.clear();
-    _otpFocus.requestFocus();
-    setState(() => _isError = false);
+    _otpKey.currentState?.clear();
+    setState(() {
+      _otp = '';
+      _isError = false;
+    });
   }
 
-  void _onOtpChanged(String value) {
-    final digits = value.replaceAll(RegExp(r'\D'), '');
-    if (digits != value) {
-      _otpCtrl.text = digits;
-      _otpCtrl.selection = TextSelection.collapsed(offset: digits.length);
-    }
-    setState(() => _isError = false);
-  }
-
-  Future<void> _verify() async {
-    if (!_complete || _verifying) return;
+  Future<void> _verify([String? codeOverride]) async {
+    final otp = (codeOverride ?? _otp).trim();
+    if (otp.length != 6 || _verifying) return;
     _verifying = true;
-    _otpFocus.unfocus();
+    final seq = ++_verifySeq;
+    setState(() {
+      _otp = otp;
+    });
+    FocusManager.instance.primaryFocus?.unfocus();
 
     final t = AppLocalizations.of(context)!;
     final prov = context.read<AuthProvider>();
 
     final ok = await prov.verifyOtp(
       widget.phone,
-      _otpCtrl.text,
-      consents: LegalService.instance.passengerConsents(),
+      otp,
+      consents: widget.isLogin
+          ? null
+          : LegalService.instance.passengerConsents(),
     );
-    if (!mounted) return;
-    _verifying = false;
+    if (!mounted || seq != _verifySeq) return;
+    setState(() => _verifying = false);
 
     if (!ok) {
       HapticFeedback.heavyImpact();
       setState(() => _isError = true);
       _snack(localizeAuthError(prov.error, t), Colors.red.shade600);
+      Future.delayed(const Duration(milliseconds: 400), _clear);
       return;
     }
 
+    TextInput.finishAutofillContext(shouldSave: false);
+
     if (widget.isLogin) {
+      final passenger = prov.passenger;
+      final dest = passenger != null && !passenger.profileCompleted
+          ? const IntroScreen()
+          : const RiderHomeScreen();
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const RiderHomeScreen()),
+        MaterialPageRoute(builder: (_) => dest),
         (_) => false,
       );
     } else {
@@ -123,11 +128,14 @@ class _OtpScreenState extends State<OtpScreen> {
   Future<void> _resend() async {
     final t = AppLocalizations.of(context)!;
     final prov = context.read<AuthProvider>();
-    final ok = await prov.sendOtp(widget.phone);
+    final ok = widget.isLogin
+        ? await prov.sendLoginOtp(widget.phone)
+        : await prov.sendOtp(widget.phone);
     if (!mounted) return;
     if (ok) {
       _clear();
       _startTimer();
+      await _otpKey.currentState?.restartListening();
       _snack(t.codeSentSuccess, Colors.green);
     } else {
       _snack(localizeAuthError(prov.error, t), Colors.red.shade600);
@@ -147,9 +155,7 @@ class _OtpScreenState extends State<OtpScreen> {
   Widget build(BuildContext context) {
     final local = AppLocalizations.of(context)!;
     final prov = context.watch<AuthProvider>();
-    final loading = prov.loading || _verifying;
-    final code = _otpCtrl.text;
-    final digits = code.padRight(6).split('');
+    final loading = _verifying || prov.verifying;
 
     return A11yScreen(
       label: local.otpTitle,
@@ -197,68 +203,22 @@ class _OtpScreenState extends State<OtpScreen> {
                 '${local.otpSubtitle} ${widget.phone}',
                 style: TextStyle(color: Colors.grey[600]),
               ),
+              const SizedBox(height: 8),
+              Text(
+                'قد يستغرق وصول الرسالة حتى 60 ثانية. إذا لم تصل، اضغط إعادة إرسال.',
+                style: TextStyle(color: Colors.grey[500], fontSize: 13, height: 1.4),
+              ),
               const SizedBox(height: 32),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(6, (i) {
-                  final filled = i < code.length;
-                  return Container(
-                    width: 48,
-                    height: 56,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: _isError
-                          ? Colors.red.shade100
-                          : filled
-                          ? Colors.green.shade50
-                          : Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _otpFocus.hasFocus && i == code.length
-                            ? Colors.green
-                            : Colors.grey.shade200,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Text(
-                      filled ? digits[i] : '',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  );
+              OtpCodeInput(
+                key: _otpKey,
+                hasError: _isError,
+                enabled: !loading,
+                onChanged: (v) => setState(() {
+                  _otp = v;
+                  _isError = false;
                 }),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _otpCtrl,
-                focusNode: _otpFocus,
-                enabled: !loading,
-                keyboardType: TextInputType.number,
-                textInputAction: TextInputAction.done,
-                autofillHints: const [AutofillHints.oneTimeCode],
-                maxLength: 6,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: InputDecoration(
-                  labelText: local.otpHint,
-                  counterText: '',
-                  filled: true,
-                  fillColor: Colors.grey.shade50,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                onChanged: _onOtpChanged,
-                onSubmitted: (_) {
-                  if (_complete) _verify();
-                },
-              ),
-
               const SizedBox(height: 24),
-
               SizedBox(
                 width: double.infinity,
                 height: 56,
@@ -294,7 +254,6 @@ class _OtpScreenState extends State<OtpScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
               Center(
                 child: _sec > 0

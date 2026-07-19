@@ -9,6 +9,7 @@ import '../models/passenger_model.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/services/rider_fcm_service.dart';
 import '../../../core/utils/auth_error_messages.dart';
+import '../../../core/utils/resilient_http.dart';
 import '../../rider/account/my_account_all/service/account_service.dart';
 
 enum RiderStatus { notLoggedIn, newUser, returning }
@@ -26,13 +27,19 @@ class AuthProvider extends ChangeNotifier {
   bool _isNew = false;
   String? _error;
   bool _loading = false;
+  bool _sendingOtp = false;
+  bool _verifying = false;
+
+  bool get sendingOtp => _sendingOtp;
+  bool get verifying => _verifying;
+  bool get loading => _verifying || _loading;
 
   PassengerModel? get passenger => _passenger;
   String? get token => _token;
   String? get localProfilePreview => _localProfilePreview;
   bool get isNew => _isNew;
   String? get error => _error;
-  bool get loading => _loading;
+  bool get isAccountNotFound => _error == authErrAccountNotFound;
 
   // ─── فحص الحالة عند فتح التطبيق ──────────────────────────
   Future<RiderStatus> checkStatus() async {
@@ -42,12 +49,10 @@ class AuthProvider extends ChangeNotifier {
 
       _token = tok;
 
-      final res = await http
-          .get(
-            Uri.parse('${Api.base}${Api.passengerMe}'),
-            headers: {..._h, 'Authorization': 'Bearer $tok'},
-          )
-          .timeout(const Duration(seconds: 10));
+      final res = await ResilientHttp.get(
+        Uri.parse('${Api.base}${Api.passengerMe}'),
+        headers: {..._h, 'Authorization': 'Bearer $tok'},
+      );
 
       if (res.statusCode == 200) {
         _passenger = PassengerModel.fromJson(
@@ -66,28 +71,60 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // ─── Send OTP ─────────────────────────────────────────────
-  Future<bool> sendOtp(String phone) async {
-    _begin();
-    try {
-      final res = await http
-          .post(
-            Uri.parse('${Api.base}${Api.sendOtp}'),
-            headers: _h,
-            body: jsonEncode({'phone': phone, 'role': 'PASSENGER'}),
-          )
-          .timeout(const Duration(seconds: 15));
+  Future<bool> sendLoginOtp(String phone) => sendOtp(phone, forLogin: true);
 
-      final data = jsonDecode(utf8.decode(res.bodyBytes));
+  Future<bool> sendOtp(String phone, {bool forLogin = false}) async {
+    if (_sendingOtp) return false;
+    _sendingOtp = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final body = <String, dynamic>{
+        'phone': phone,
+        'role': 'PASSENGER',
+      };
+      if (forLogin) body['intent'] = 'login';
+
+      final res = await ResilientHttp.authSendPost(
+        Uri.parse('${Api.base}${Api.sendOtp}'),
+        headers: _h,
+        body: jsonEncode(body),
+      );
+
+      final data = ResilientHttp.decodeJson(res);
 
       if (res.statusCode == 200 || res.statusCode == 201) {
-        _loading = false;
+        _sendingOtp = false;
         notifyListeners();
         return true;
       }
-      _fail(data['message']?.toString() ?? authErrSendOtp);
+      if (res.statusCode == 404) {
+        _error = authErrAccountNotFound;
+      } else if (data['code'] == 'SMS_DELIVERY_FAILED') {
+        _error = authErrSendOtp;
+      } else if (data['code'] == 'LEGAL_CONSENT_REQUIRED') {
+        _error = data['message']?.toString() ?? 'Legal consent required';
+      } else {
+        _error = data['message']?.toString() ?? authErrSendOtp;
+      }
+      _sendingOtp = false;
+      notifyListeners();
+      return false;
+    } on TimeoutException {
+      _error = authErrNetwork;
+      _sendingOtp = false;
+      notifyListeners();
+      return false;
+    } on SocketException {
+      _error = authErrNetwork;
+      _sendingOtp = false;
+      notifyListeners();
       return false;
     } catch (e) {
-      _fail(authErrNetwork);
+      _error = e.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
+      if (_error!.isEmpty) _error = authErrSendOtp;
+      _sendingOtp = false;
+      notifyListeners();
       return false;
     }
   }
@@ -98,7 +135,9 @@ class AuthProvider extends ChangeNotifier {
     String otp, {
     List<Map<String, String>>? consents,
   }) async {
-    _begin();
+    _verifying = true;
+    _error = null;
+    notifyListeners();
     try {
       final body = <String, dynamic>{
         'phone': phone,
@@ -109,21 +148,20 @@ class AuthProvider extends ChangeNotifier {
         body['consents'] = consents;
       }
 
-      final res = await http
-          .post(
-            Uri.parse('${Api.base}${Api.verifyOtp}'),
-            headers: _h,
-            body: jsonEncode(body),
-          )
-          .timeout(const Duration(seconds: 15));
+      final res = await ResilientHttp.authPost(
+        Uri.parse('${Api.base}${Api.verifyOtp}'),
+        headers: _h,
+        body: jsonEncode(body),
+      );
 
-      final data = jsonDecode(utf8.decode(res.bodyBytes));
+      final data = ResilientHttp.decodeJson(res);
 
       if (res.statusCode == 200 || res.statusCode == 201) {
-        // الباك اند يرجع access_token مو token
         final tok = data['access_token']?.toString();
         if (tok == null) {
-          _fail(authErrInvalidResponse);
+          _error = authErrInvalidResponse;
+          _verifying = false;
+          notifyListeners();
           return false;
         }
 
@@ -131,26 +169,42 @@ class AuthProvider extends ChangeNotifier {
         _isNew = data['isNew'] ?? false;
         await _storage.write(key: 'passenger_token', value: tok);
 
-        // حمّل بيانات الراكب
         if (data['user'] != null) {
           _passenger = PassengerModel.fromJson(data['user']);
         }
 
-        _loading = false;
+        _verifying = false;
         notifyListeners();
         unawaited(RiderFcmService.instance.uploadTokenIfLoggedIn());
         return true;
       }
 
       final msg = data['message'];
-      _fail(
-        msg is List
+      if (data['code'] == 'LEGAL_CONSENT_REQUIRED') {
+        _error = msg?.toString() ?? 'Legal consent required';
+      } else {
+        _error = msg is List
             ? msg.join(', ')
-            : msg?.toString() ?? authErrInvalidOtp,
-      );
+            : msg?.toString() ?? authErrInvalidOtp;
+      }
+      _verifying = false;
+      notifyListeners();
+      return false;
+    } on TimeoutException {
+      _error = authErrNetwork;
+      _verifying = false;
+      notifyListeners();
+      return false;
+    } on SocketException {
+      _error = authErrNetwork;
+      _verifying = false;
+      notifyListeners();
       return false;
     } catch (e) {
-      _fail(authErrNetwork);
+      _error = e.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
+      if (_error!.isEmpty) _error = authErrInvalidOtp;
+      _verifying = false;
+      notifyListeners();
       return false;
     }
   }

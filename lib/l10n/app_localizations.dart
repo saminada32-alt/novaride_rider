@@ -185,6 +185,24 @@ abstract class AppLocalizations {
   /// **'Failed to send verification code'**
   String get failedToSendOtp;
 
+  /// No description provided for @networkSlowRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Network is slow — please try again'**
+  String get networkSlowRetry;
+
+  /// No description provided for @accountNotRegistered.
+  ///
+  /// In en, this message translates to:
+  /// **'This number is not registered. Please create a new account.'**
+  String get accountNotRegistered;
+
+  /// No description provided for @accountNotRegisteredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not registered'**
+  String get accountNotRegisteredTitle;
+
   /// No description provided for @invalidResponse.
   ///
   /// In en, this message translates to:

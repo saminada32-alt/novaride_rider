@@ -41,6 +41,7 @@ app.*.map.json
 
 # Local secrets (copy config/prod.example.json → config/prod.json)
 config/prod.json
+android/local.properties
 ios/build/
 
 # Android Studio will place build artifacts here

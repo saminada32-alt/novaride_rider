@@ -6,9 +6,12 @@ import 'package:country_code_picker/country_code_picker.dart';
 import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/services/app_controller.dart';
+import '../../../core/utils/auth_send_guard.dart';
 import '../../../core/utils/auth_error_messages.dart';
+import '../../../core/utils/phone_utils.dart';
 import '../providers/auth_provider.dart';
 import '../otp/otp_screen.dart';
+import '../welcome/welcome_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -43,6 +46,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   void _onPhoneChanged(String v) {
     String c = v.replaceAll(RegExp(r'\D'), '');
+    if (c.startsWith('963')) c = c.substring(3);
     if (c.startsWith('0')) c = c.substring(1);
     if (c.length > 9) c = c.substring(0, 9);
     if (c != v) {
@@ -56,9 +60,35 @@ class _LoginScreenState extends State<LoginScreen>
 
   bool get _valid => _phoneCtrl.text.trim().length >= 7;
 
+  bool _sending = false;
+
   Future<void> _send() async {
-    final phone = '$_code${_phoneCtrl.text.trim()}';
+    if (!_valid || _sending) return;
+    setState(() => _sending = true);
+
+    final phone = buildAuthPhone(_code, _phoneCtrl.text.trim());
+    final prov = context.read<AuthProvider>();
+    final local = AppLocalizations.of(context)!;
+
+    final ok = await withMinAuthLoading(prov.sendLoginOtp(phone));
+
     if (!mounted) return;
+    setState(() => _sending = false);
+
+    if (!ok) {
+      if (prov.isAccountNotFound) {
+        await _showNotRegisteredDialog(local);
+        if (!mounted) return;
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+          (_) => false,
+        );
+        return;
+      }
+      _snack(localizeAuthError(prov.error, local), Colors.red.shade600);
+      return;
+    }
 
     Navigator.push(
       context,
@@ -69,12 +99,6 @@ class _LoginScreenState extends State<LoginScreen>
         ),
       ),
     );
-
-    final prov = context.read<AuthProvider>();
-    final local = AppLocalizations.of(context)!;
-    final ok = await prov.sendOtp(phone);
-    if (!mounted || ok) return;
-    _snack(localizeAuthError(prov.error, local), Colors.red.shade600);
   }
 
   void _snack(String m, Color c) => ScaffoldMessenger.of(context).showSnackBar(
@@ -86,11 +110,26 @@ class _LoginScreenState extends State<LoginScreen>
     ),
   );
 
+  Future<void> _showNotRegisteredDialog(AppLocalizations local) {
+    return showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(local.accountNotRegisteredTitle),
+        content: Text(local.accountNotRegistered),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(local.confirm),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final local = AppLocalizations.of(context)!;
     final ctrl = context.watch<AppController>();
-    final prov = context.watch<AuthProvider>();
     final isAr = ctrl.isArabic;
 
     return A11yScreen(
@@ -213,7 +252,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 height: 55,
                                 child: A11yButton(
                                   label: local.loginButton,
-                                  enabled: _valid && !prov.loading,
+                                  enabled: _valid && !_sending,
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.green,
@@ -224,10 +263,8 @@ class _LoginScreenState extends State<LoginScreen>
                                       ),
                                       elevation: 0,
                                     ),
-                                    onPressed: (_valid && !prov.loading)
-                                        ? _send
-                                        : null,
-                                    child: prov.loading
+                                    onPressed: (_valid && !_sending) ? _send : null,
+                                    child: _sending
                                         ? const SizedBox(
                                             width: 22,
                                             height: 22,

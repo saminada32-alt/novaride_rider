@@ -78,7 +78,7 @@ class _ConnectivityOverlayState extends State<ConnectivityOverlay> {
         final queueCount = OfflineRideQueueService.instance.count;
         _onQueueChange(queueCount);
 
-        final showNetworkBanner = net.status != AppNetworkStatus.online;
+        final showNetworkBanner = net.status == AppNetworkStatus.offline;
         final showQueueBanner = queueCount > 0;
         final topPad = (showNetworkBanner ? ConnectivityOverlay._networkBannerHeight : 0) +
             (showQueueBanner ? OfflineQueueBanner.height : 0);

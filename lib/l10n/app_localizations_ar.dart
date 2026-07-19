@@ -56,6 +56,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get failedToSendOtp => 'تعذّر إرسال رمز التحقق';
 
   @override
+  String get networkSlowRetry => 'الشبكة بطيئة — حاول مجدداً';
+
+  @override
+  String get accountNotRegistered => 'هذا الرقم غير مسجل. أنشئ حساباً جديداً للمتابعة.';
+
+  @override
+  String get accountNotRegisteredTitle => 'غير مسجل';
+
+  @override
   String get invalidResponse => 'استجابة غير صالحة من السيرفر';
 
   @override

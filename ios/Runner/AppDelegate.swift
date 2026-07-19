@@ -12,7 +12,7 @@ import UIKit
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    GMSServices.provideAPIKey("AIzaSyBFOsy2H4WRkIunwH5c2kjm3dbqcxNE-Us")
+    GMSServices.provideAPIKey("AIzaSyBJ1lFi166_QIZYH9tQuJkg5EDco5hTvpw")
     FirebaseApp.configure()
     UNUserNotificationCenter.current().delegate = self
     Messaging.messaging().delegate = self

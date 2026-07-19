@@ -100,7 +100,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
     }
     _initLocation();
     _checkActiveRide();
-    _checkRetryableRides();
+    Future.microtask(_checkRetryableRides);
     _loadMapIcons();
     _refreshLocalSurge();
     RiderCatalogService.instance.ensureLoaded().then((_) {

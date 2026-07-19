@@ -37,11 +37,13 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _check() async {
-    await Future.delayed(const Duration(milliseconds: 2000));
+    final results = await Future.wait([
+      context.read<AuthProvider>().checkStatus(),
+      Future.delayed(const Duration(milliseconds: 500)),
+    ]);
     if (!mounted) return;
 
-    final status = await context.read<AuthProvider>().checkStatus();
-    if (!mounted) return;
+    final status = results[0] as RiderStatus;
 
     switch (status) {
       case RiderStatus.returning:
