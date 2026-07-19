@@ -2,6 +2,8 @@ import '../../l10n/app_localizations.dart';
 
 /// Internal keys set by [AuthProvider] — mapped to l10n in the UI.
 const authErrNetwork = '@@auth:network@@';
+const authErrServerTimeout = '@@auth:server_timeout@@';
+const authErrNoConnection = '@@auth:no_connection@@';
 const authErrInvalidOtp = '@@auth:invalid_otp@@';
 const authErrSendOtp = '@@auth:send_otp@@';
 const authErrAccountNotFound = '@@auth:account_not_found@@';
@@ -14,6 +16,10 @@ String localizeAuthError(String? raw, AppLocalizations t) {
   switch (raw) {
     case authErrNetwork:
       return t.networkSlowRetry;
+    case authErrServerTimeout:
+      return 'الخادم تأخر في الرد — حاول مجدداً';
+    case authErrNoConnection:
+      return 'تعذّر الاتصال بالخادم — تحقق من الإنترنت';
     case authErrInvalidOtp:
       return t.invalidOtp;
     case authErrSendOtp:
@@ -38,8 +44,11 @@ String localizeAuthError(String? raw, AppLocalizations t) {
   if (lower.contains('otp')) {
     return t.invalidOtp;
   }
-  if (lower.contains('timeout') || msg.contains('مهلة')) {
-    return t.networkSlowRetry;
+  if (lower.contains('timeout') || msg.contains('مهلة') || msg.contains('تأخر')) {
+    return 'الخادم تأخر في الرد — حاول مجدداً';
+  }
+  if (lower.contains('socket') || msg.contains('الاتصال بالخادم')) {
+    return 'تعذّر الاتصال بالخادم — تحقق من الإنترنت';
   }
   if (lower.contains('sms') || msg.contains('SMS_DELIVERY')) {
     return t.failedToSendOtp;

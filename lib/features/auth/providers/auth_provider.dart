@@ -111,12 +111,12 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     } on TimeoutException {
-      _error = authErrNetwork;
+      _error = authErrServerTimeout;
       _sendingOtp = false;
       notifyListeners();
       return false;
     } on SocketException {
-      _error = authErrNetwork;
+      _error = authErrNoConnection;
       _sendingOtp = false;
       notifyListeners();
       return false;
@@ -191,12 +191,12 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     } on TimeoutException {
-      _error = authErrNetwork;
+      _error = authErrServerTimeout;
       _verifying = false;
       notifyListeners();
       return false;
     } on SocketException {
-      _error = authErrNetwork;
+      _error = authErrNoConnection;
       _verifying = false;
       notifyListeners();
       return false;
