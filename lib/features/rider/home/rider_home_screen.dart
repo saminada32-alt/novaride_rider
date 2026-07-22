@@ -734,12 +734,15 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
         accuracy: LocationAccuracy.medium,
         distanceFilter: 20,
       ),
-    ).listen((pos) {
-      if (!mounted) return;
-      setState(() => _currentPosition = LatLng(pos.latitude, pos.longitude));
-      _refreshLocalSurge();
-      if (_activeRide == null) _loadNearbyDrivers();
-    });
+    ).listen(
+      (pos) {
+        if (!mounted) return;
+        setState(() => _currentPosition = LatLng(pos.latitude, pos.longitude));
+        _refreshLocalSurge();
+        if (_activeRide == null) _loadNearbyDrivers();
+      },
+      onError: (e) => debugPrint('Rider location stream: $e'),
+    );
   }
 
   Future<void> _refreshActiveRide() async {
@@ -749,17 +752,21 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
   }
 
   Future<void> _checkActiveRide() async {
-    final results = await Future.wait([
-      RiderService.instance.getMyRides(),
-      RiderService.instance.getScheduledRides(),
-    ]);
-    if (!mounted) return;
-    final rides = results[0];
-    final scheduled = results[1];
-    _applyRidesFromServer(rides, refitOnNewLive: true);
-    if (_activeRide == null) {
-      setState(() => _scheduledRide = scheduled.isNotEmpty ? scheduled.first : null);
-      if (_scheduledRide != null) _startScheduledWatch();
+    try {
+      final results = await Future.wait([
+        RiderService.instance.getMyRides(),
+        RiderService.instance.getScheduledRides(),
+      ]);
+      if (!mounted) return;
+      final rides = results[0];
+      final scheduled = results[1];
+      _applyRidesFromServer(rides, refitOnNewLive: true);
+      if (_activeRide == null) {
+        setState(() => _scheduledRide = scheduled.isNotEmpty ? scheduled.first : null);
+        if (_scheduledRide != null) _startScheduledWatch();
+      }
+    } catch (e) {
+      debugPrint('_checkActiveRide failed: $e');
     }
   }
 
@@ -1143,7 +1150,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
                     _loadNearbyDrivers();
                   }
                 },
-                myLocationEnabled: true,
+                myLocationEnabled: false,
                 myLocationButtonEnabled: false,
                 zoomControlsEnabled: false,
                 mapToolbarEnabled: false,

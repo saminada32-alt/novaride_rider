@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -14,18 +15,30 @@ import 'app.dart';
 
 @pragma('vm:entry-point')
 Future<void> _fcmBackground(RemoteMessage msg) async {
-  await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp();
+  } catch (_) {}
 }
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  FirebaseMessaging.onBackgroundMessage(_fcmBackground);
+
+  try {
+    FirebaseMessaging.onBackgroundMessage(_fcmBackground);
+  } catch (e, st) {
+    debugPrint('FCM background handler setup failed: $e');
+  }
 
   final appController = AppController();
-  await Future.wait([
-    Firebase.initializeApp(),
-    appController.loadLocale(),
-  ]);
+
+  try {
+    await Firebase.initializeApp();
+  } catch (e, st) {
+    debugPrint('Firebase init failed: $e');
+  }
+
+  await CrashReporting.init();
+  await appController.loadLocale();
 
   final promoProvider = PromoProvider();
   final networkService = NetworkConnectivityService();

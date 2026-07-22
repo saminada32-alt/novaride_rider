@@ -10,6 +10,7 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/services/rider_fcm_service.dart';
 import '../../../core/utils/auth_error_messages.dart';
 import '../../../core/utils/resilient_http.dart';
+import '../../../core/utils/session_cache.dart';
 import '../../rider/account/my_account_all/service/account_service.dart';
 
 enum RiderStatus { notLoggedIn, newUser, returning }
@@ -43,8 +44,9 @@ class AuthProvider extends ChangeNotifier {
 
   // ─── فحص الحالة عند فتح التطبيق ──────────────────────────
   Future<RiderStatus> checkStatus() async {
+    String? tok;
     try {
-      final tok = await _storage.read(key: 'passenger_token');
+      tok = await _storage.read(key: 'passenger_token');
       if (tok == null) return RiderStatus.notLoggedIn;
 
       _token = tok;
@@ -54,20 +56,65 @@ class AuthProvider extends ChangeNotifier {
         headers: {..._h, 'Authorization': 'Bearer $tok'},
       );
 
+      if (res.statusCode == 401) {
+        await logout();
+        return RiderStatus.notLoggedIn;
+      }
+
       if (res.statusCode == 200) {
         _passenger = PassengerModel.fromJson(
           jsonDecode(utf8.decode(res.bodyBytes)),
         );
         notifyListeners();
         unawaited(RiderFcmService.instance.uploadTokenIfLoggedIn());
+        await SessionCache.saveRiderProfileCompleted(
+          _passenger!.profileCompleted,
+        );
         return _passenger!.profileCompleted
             ? RiderStatus.returning
             : RiderStatus.newUser;
       }
+
+      if (tok.isNotEmpty) {
+        final status = await _statusFromCache(fallback: RiderStatus.returning);
+        unawaited(_refreshRiderInBackground(tok));
+        return status;
+      }
       return RiderStatus.notLoggedIn;
     } catch (_) {
+      if (tok != null) {
+        final status = await _statusFromCache(fallback: RiderStatus.returning);
+        unawaited(_refreshRiderInBackground(tok));
+        return status;
+      }
       return RiderStatus.notLoggedIn;
     }
+  }
+
+  Future<void> _refreshRiderInBackground(String tok) async {
+    try {
+      final res = await ResilientHttp.get(
+        Uri.parse('${Api.base}${Api.passengerMe}'),
+        headers: {..._h, 'Authorization': 'Bearer $tok'},
+      );
+      if (res.statusCode != 200) return;
+      _passenger = PassengerModel.fromJson(
+        jsonDecode(utf8.decode(res.bodyBytes)),
+      );
+      await SessionCache.saveRiderProfileCompleted(
+        _passenger!.profileCompleted,
+      );
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  Future<RiderStatus> _statusFromCache({
+    required RiderStatus fallback,
+  }) async {
+    final completed = await SessionCache.loadRiderProfileCompleted();
+    if (completed == true) return RiderStatus.returning;
+    if (completed == false) return RiderStatus.newUser;
+    return fallback;
   }
 
   // ─── Send OTP ─────────────────────────────────────────────
@@ -171,6 +218,9 @@ class AuthProvider extends ChangeNotifier {
 
         if (data['user'] != null) {
           _passenger = PassengerModel.fromJson(data['user']);
+          await SessionCache.saveRiderProfileCompleted(
+            _passenger!.profileCompleted,
+          );
         }
 
         _verifying = false;
@@ -225,6 +275,9 @@ class AuthProvider extends ChangeNotifier {
       if (res.statusCode == 200) {
         _passenger = PassengerModel.fromJson(
           jsonDecode(utf8.decode(res.bodyBytes)),
+        );
+        await SessionCache.saveRiderProfileCompleted(
+          _passenger!.profileCompleted,
         );
         _loading = false;
         notifyListeners();
@@ -281,6 +334,7 @@ class AuthProvider extends ChangeNotifier {
   // ─── Logout ───────────────────────────────────────────────
   Future<void> logout() async {
     await _storage.delete(key: 'passenger_token');
+    await SessionCache.clearRider();
     _passenger = null;
     _token = null;
     notifyListeners();

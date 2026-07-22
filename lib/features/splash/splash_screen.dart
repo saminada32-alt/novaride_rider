@@ -1,10 +1,12 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/widgets/a11y.dart';
 import '../../l10n/app_localizations.dart';
 import '../auth/providers/auth_provider.dart';
 import '../auth/welcome/welcome_screen.dart';
-import '../auth/intro/intro_screen.dart';
+import '../auth/navigation/rider_onboarding_router.dart';
 import '../rider/home/rider_home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -37,19 +39,42 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _check() async {
-    final status = await context.read<AuthProvider>().checkStatus();
-    if (!mounted) return;
+    try {
+      final status = await context.read<AuthProvider>().checkStatus();
+      if (!mounted) return;
 
-    switch (status) {
-      case RiderStatus.returning:
-        _go(const RiderHomeScreen(), fast: true);
-        break;
-      case RiderStatus.newUser:
-        _go(const IntroScreen());
-        break;
-      case RiderStatus.notLoggedIn:
+      switch (status) {
+        case RiderStatus.returning:
+          _go(const RiderHomeScreen(), fast: true);
+          break;
+        case RiderStatus.newUser:
+          unawaited(
+            RiderOnboardingRouter.resumeIncomplete(
+              context,
+              profileCompleted: false,
+            ),
+          );
+          break;
+        case RiderStatus.notLoggedIn:
+          _go(const WelcomeScreen());
+          break;
+      }
+    } catch (e, st) {
+      debugPrint('Splash check failed: $e\n$st');
+      if (!mounted) return;
+      final tok = context.read<AuthProvider>().token;
+      if (tok != null) {
+        unawaited(
+          RiderOnboardingRouter.resumeIncomplete(
+            context,
+            profileCompleted:
+                context.read<AuthProvider>().passenger?.profileCompleted ??
+                false,
+          ),
+        );
+      } else {
         _go(const WelcomeScreen());
-        break;
+      }
     }
   }
 

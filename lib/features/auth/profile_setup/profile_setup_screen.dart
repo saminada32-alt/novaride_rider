@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../navigation/rider_onboarding_router.dart';
 import '../intro/intro_screen.dart';
 import '../../../core/widgets/a11y.dart';
 import '../../../core/utils/auth_error_messages.dart';
@@ -24,6 +26,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   @override
   void initState() {
     super.initState();
+    unawaited(
+      RiderOnboardingRouter.saveStep(RiderOnboardingStep.profileSetup),
+    );
     // عبّي البيانات من الـ register إذا موجودة
     if (widget.registerData != null) {
       final name = widget.registerData!['name'] ?? '';
@@ -77,6 +82,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     final local = AppLocalizations.of(context)!;
 
     if (ok) {
+      unawaited(RiderOnboardingRouter.saveStep(RiderOnboardingStep.intro));
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const IntroScreen()),

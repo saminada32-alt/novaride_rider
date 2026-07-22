@@ -500,11 +500,15 @@ class RiderService {
         .timeout(const Duration(seconds: 15));
 
     if (res.statusCode == 200) {
-      final data = jsonDecode(utf8.decode(res.bodyBytes));
-      final list = data is List ? data : (data['data'] ?? []);
-      return (list as List)
-          .map((r) => RideModel.fromJson(Map<String, dynamic>.from(r)))
-          .toList();
+      try {
+        final data = jsonDecode(utf8.decode(res.bodyBytes));
+        final list = data is List ? data : (data['data'] ?? []);
+        return (list as List)
+            .map((r) => RideModel.fromJson(Map<String, dynamic>.from(r)))
+            .toList();
+      } catch (_) {
+        return [];
+      }
     }
     return [];
   }
@@ -521,11 +525,15 @@ class RiderService {
         .timeout(const Duration(seconds: 15));
 
     if (res.statusCode == 200) {
-      final data = jsonDecode(utf8.decode(res.bodyBytes));
-      final list = data is List ? data : (data['data'] ?? []);
-      return (list as List)
-          .map((r) => RideModel.fromJson(Map<String, dynamic>.from(r)))
-          .toList();
+      try {
+        final data = jsonDecode(utf8.decode(res.bodyBytes));
+        final list = data is List ? data : (data['data'] ?? []);
+        return (list as List)
+            .map((r) => RideModel.fromJson(Map<String, dynamic>.from(r)))
+            .toList();
+      } catch (_) {
+        return [];
+      }
     }
     return [];
   }

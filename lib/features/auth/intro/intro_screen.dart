@@ -1,10 +1,23 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
+import '../navigation/rider_onboarding_router.dart';
 import '../../rider/home/rider_home_screen.dart';
 
-class IntroScreen extends StatelessWidget {
+class IntroScreen extends StatefulWidget {
   const IntroScreen({super.key});
+
+  @override
+  State<IntroScreen> createState() => _IntroScreenState();
+}
+
+class _IntroScreenState extends State<IntroScreen> {
+  @override
+  void initState() {
+    super.initState();
+    unawaited(RiderOnboardingRouter.saveStep(RiderOnboardingStep.intro));
+  }
 
   @override
   Widget build(BuildContext context) {

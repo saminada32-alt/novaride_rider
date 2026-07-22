@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -20,7 +21,8 @@ class RiderFcmService {
   Function(String status, int rideId)? onRideUpdate;
 
   Future<void> init() async {
-    await _localNotif.initialize(
+    try {
+      await _localNotif.initialize(
       settings: const InitializationSettings(
         android: AndroidInitializationSettings('@mipmap/ic_launcher'),
         iOS: DarwinInitializationSettings(),
@@ -72,6 +74,9 @@ class RiderFcmService {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _handleData(initial.data);
       });
+    }
+    } catch (e, st) {
+      debugPrint('RiderFcmService init failed: $e');
     }
   }
 

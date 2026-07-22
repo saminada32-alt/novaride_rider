@@ -8,8 +8,8 @@ import '../../../l10n/app_localizations.dart';
 import '../../../core/services/legal_service.dart';
 import '../../../core/utils/auth_error_messages.dart';
 import '../providers/auth_provider.dart';
+import '../navigation/rider_onboarding_router.dart';
 import '../profile_setup/profile_setup_screen.dart';
-import '../intro/intro_screen.dart';
 import '../../rider/home/rider_home_screen.dart';
 
 class OtpScreen extends StatefulWidget {
@@ -106,15 +106,24 @@ class _OtpScreenState extends State<OtpScreen> {
 
     if (widget.isLogin) {
       final passenger = prov.passenger;
-      final dest = passenger != null && !passenger.profileCompleted
-          ? const IntroScreen()
-          : const RiderHomeScreen();
+      if (passenger != null && !passenger.profileCompleted) {
+        unawaited(
+          RiderOnboardingRouter.resumeIncomplete(
+            context,
+            profileCompleted: false,
+          ),
+        );
+        return;
+      }
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => dest),
+        MaterialPageRoute(builder: (_) => const RiderHomeScreen()),
         (_) => false,
       );
     } else {
+      unawaited(
+        RiderOnboardingRouter.saveStep(RiderOnboardingStep.profileSetup),
+      );
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
