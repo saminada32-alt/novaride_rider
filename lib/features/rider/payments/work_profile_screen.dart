@@ -35,9 +35,14 @@ class _WorkProfileScreenState extends State<WorkProfileScreen> {
     final addr = _addressCtrl.text.trim();
     setState(() => _saving = true);
 
-    final data = await AccountService.instance.updateProfile({
-      'workAddress': addr.isEmpty ? null : addr,
-    });
+    Map<String, dynamic>? data;
+    try {
+      data = await AccountService.instance.updateProfile({
+        'workAddress': addr.isEmpty ? null : addr,
+      });
+    } catch (_) {
+      data = null;
+    }
 
     if (!mounted) return;
     setState(() => _saving = false);

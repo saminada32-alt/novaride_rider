@@ -8,8 +8,7 @@ class RiderActiveRideBottomSheet extends StatelessWidget {
   final ScrollController scrollController;
   final RideModel ride;
   final AppLocalizations t;
-  final bool audioRecording;
-  final VoidCallback onToggleAudio;
+  final int? liveEtaMinutes;
   final VoidCallback? onRefresh;
   final VoidCallback? onMessage;
   final VoidCallback? onCall;
@@ -22,8 +21,7 @@ class RiderActiveRideBottomSheet extends StatelessWidget {
     required this.scrollController,
     required this.ride,
     required this.t,
-    required this.audioRecording,
-    required this.onToggleAudio,
+    this.liveEtaMinutes,
     this.onRefresh,
     this.onMessage,
     this.onCall,
@@ -102,7 +100,7 @@ class RiderActiveRideBottomSheet extends StatelessWidget {
     final driverName = driver == null
         ? ''
         : '${driver['firstName'] ?? ''} ${driver['lastName'] ?? ''}'.trim();
-    final rating = driver?['rating']?.toString() ?? '5.0';
+    final rating = driver?['rating']?.toString() ?? '—';
     final pickup = ride.pickupAddress ??
         '${ride.pickupLat.toStringAsFixed(4)}, ${ride.pickupLng.toStringAsFixed(4)}';
     final dropoff = ride.dropoffAddress ??
@@ -114,7 +112,8 @@ class RiderActiveRideBottomSheet extends StatelessWidget {
               '${w.lat.toStringAsFixed(4)}, ${w.lng.toStringAsFixed(4)}',
         )
         .toList();
-    final etaHeadline = RiderActiveRideUi.etaHeroText(ride, t);
+    final etaHeadline =
+        RiderActiveRideUi.etaHeroText(ride, t, liveEtaMinutes: liveEtaMinutes);
     final instruction = RiderActiveRideUi.instructionText(ride, t);
     final vehicleDesc = RiderActiveRideUi.vehicleSubtitle(ride.vehicle);
     final plate = RiderActiveRideUi.plateText(ride.vehicle);
@@ -141,12 +140,6 @@ class RiderActiveRideBottomSheet extends StatelessWidget {
             etaHeadline,
             loading: ride.status == RideStatus.searching,
           ),
-          if (ride.status != RideStatus.searching)
-            RiderActiveRideUi.safetyAudioCard(
-              t: t,
-              recording: audioRecording,
-              onToggle: onToggleAudio,
-            ),
           RiderActiveRideUi.tripInstructionCard(
             t: t,
             instruction: instruction,

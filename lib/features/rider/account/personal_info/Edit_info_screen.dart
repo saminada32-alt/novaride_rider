@@ -49,6 +49,7 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
   }
 
   Future<void> _save() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _loading = true);
 
     final prov = context.read<AuthProvider>();
@@ -95,7 +96,12 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
     prefixIcon: Icon(icon, color: Colors.green.shade600),
   );
 
-  Widget _card(String label, IconData icon, TextEditingController ctrl) =>
+  Widget _card(
+    String label,
+    IconData icon,
+    TextEditingController ctrl, {
+    String? Function(String?)? validator,
+  }) =>
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
@@ -110,7 +116,12 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
             ),
           ],
         ),
-        child: TextFormField(controller: ctrl, decoration: _dec(label, icon)),
+        child: TextFormField(
+          controller: ctrl,
+          decoration: _dec(label, icon),
+          validator: validator,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+        ),
       );
 
   @override
@@ -176,9 +187,21 @@ class _EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    _card(local.firstName, Icons.person, _firstName),
+                    _card(
+                      local.firstName,
+                      Icons.person,
+                      _firstName,
+                      validator: (v) =>
+                          (v == null || v.trim().isEmpty) ? local.requiredField : null,
+                    ),
                     const SizedBox(height: 14),
-                    _card(local.lastName, Icons.person_outline, _lastName),
+                    _card(
+                      local.lastName,
+                      Icons.person_outline,
+                      _lastName,
+                      validator: (v) =>
+                          (v == null || v.trim().isEmpty) ? local.requiredField : null,
+                    ),
                     const SizedBox(height: 14),
                     _card(local.email, Icons.email_outlined, _email),
                     const SizedBox(height: 14),

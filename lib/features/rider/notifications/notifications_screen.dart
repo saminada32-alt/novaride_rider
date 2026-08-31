@@ -3,6 +3,10 @@ import '../../../core/services/notification_inbox_service.dart';
 import '../../../core/widgets/a11y.dart';
 import '../../../core/widgets/empty_illustration.dart';
 import '../../../l10n/app_localizations.dart';
+import '../account/familyprofile/familyprofile_screen.dart';
+import '../chat/ride_chat_screen.dart';
+import '../rides/my_rides_screen.dart';
+import '../split_fare/split_fare_invites_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -24,6 +28,57 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     setState(() => _loading = true);
     await NotificationInboxService.instance.loadFromApi();
     if (mounted) setState(() => _loading = false);
+  }
+
+  Future<void> _openNotification(AppNotificationItem n) async {
+    await NotificationInboxService.instance.markRead(n.id);
+    if (mounted) setState(() {});
+    if (!mounted) return;
+
+    final rideId = int.tryParse(n.data['rideId']?.toString() ?? '');
+
+    switch (n.type) {
+      case 'RIDE_UPDATE':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MyRidesScreen()),
+        );
+        break;
+      case 'CHAT_MESSAGE':
+        if (rideId != null) {
+          final local = AppLocalizations.of(context)!;
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => RideChatScreen(
+                mode: ChatMode.ride,
+                rideId: rideId,
+                title: local.chatWithDriver,
+              ),
+            ),
+          );
+        }
+        break;
+      case 'FAMILY_INVITE':
+      case 'FAMILY_ACCEPT':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const FamilyProfileScreen()),
+        );
+        break;
+      case 'SPLIT_FARE_INVITE':
+      case 'SPLIT_FARE_PAY':
+      case 'SPLIT_FARE_ACCEPTED':
+      case 'SPLIT_FARE_DECLINED':
+      case 'SPLIT_FARE_PAID':
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SplitFareInvitesScreen()),
+        );
+        break;
+      default:
+        break;
+    }
   }
 
   @override
@@ -85,11 +140,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                     shape: BoxShape.circle,
                                   ),
                                 ),
-                          onTap: () async {
-                            await NotificationInboxService.instance
-                                .markRead(n.id);
-                            if (mounted) setState(() {});
-                          },
+                          onTap: () => _openNotification(n),
                         ),
                       );
                     },

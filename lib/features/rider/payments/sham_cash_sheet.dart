@@ -85,15 +85,19 @@ class _ShamCashSheetState extends State<_ShamCashSheet> {
         await RiderService.instance.submitPaymentReference(widget.rideId, ref);
       }
       if (mounted) {
+        final local = AppLocalizations.of(context)!;
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم إرسال رقم المرجع')),
+          SnackBar(content: Text(local.shamCashReferenceSubmitted)),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
         );
         setState(() => _submitting = false);
       }
@@ -172,15 +176,15 @@ class _ShamCashSheetState extends State<_ShamCashSheet> {
                     ),
                   ),
                 const SizedBox(height: 12),
-                _infoRow('الهاتف', phone, copy: phone),
-                _infoRow('الحساب', account),
-                _infoRow('الملاحظة', reference, copy: reference),
+                _infoRow(local.phone, phone, copy: phone),
+                _infoRow(local.shamCashAccountLabel, account),
+                _infoRow(local.shamCashReferenceLabel, reference, copy: reference),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _refCtrl,
                   decoration: InputDecoration(
-                    labelText: 'رقم مرجع التحويل',
-                    hintText: 'أدخل رقم العملية من شام كاش',
+                    labelText: local.shamCashReferenceFieldLabel,
+                    hintText: local.shamCashReferenceHint,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -207,9 +211,9 @@ class _ShamCashSheetState extends State<_ShamCashSheet> {
                               strokeWidth: 2.5,
                             ),
                           )
-                        : const Text(
-                            'تأكيد التحويل',
-                            style: TextStyle(
+                        : Text(
+                            local.shamCashConfirmButton,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                             ),
@@ -241,7 +245,9 @@ class _ShamCashSheetState extends State<_ShamCashSheet> {
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: copy));
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('تم النسخ')),
+                  SnackBar(
+                    content: Text(AppLocalizations.of(context)!.copiedToClipboard),
+                  ),
                 );
               },
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/services/current_location_service.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
@@ -14,8 +15,11 @@ class _MovingServiceScreenState extends State<MovingServiceScreen> {
   String? itemsType, vehicle;
   int workers = 1;
   String location = '';
+  double? _lat;
+  double? _lng;
   bool _loading = false;
   bool _pricingLoad = false;
+  bool _locating = false;
   double? _total;
   String? _zoneLabel;
 
@@ -40,6 +44,8 @@ class _MovingServiceScreenState extends State<MovingServiceScreen> {
         type: 'moving',
         vehicleSize: vehicle,
         workers: workers,
+        lat: _lat,
+        lng: _lng,
       );
       if (!mounted) return;
       setState(() {
@@ -57,16 +63,23 @@ class _MovingServiceScreenState extends State<MovingServiceScreen> {
     if (!_valid || _total == null) return;
     setState(() => _loading = true);
 
-    final result = await RiderService.instance.placeSpecialOrder(
-      type: 'moving',
-      details: {
-        'itemsType': itemsType,
-        'vehicleSize': vehicle,
-        'workers': workers,
-      },
-      location: location,
-      totalPrice: _total!,
-    );
+    Map<String, dynamic>? result;
+    try {
+      result = await RiderService.instance.placeSpecialOrder(
+        type: 'moving',
+        details: {
+          'itemsType': itemsType,
+          'vehicleSize': vehicle,
+          'workers': workers,
+        },
+        location: location,
+        totalPrice: _total!,
+        lat: _lat,
+        lng: _lng,
+      );
+    } catch (_) {
+      result = null;
+    }
 
     if (!mounted) return;
     setState(() => _loading = false);
@@ -79,7 +92,7 @@ class _MovingServiceScreenState extends State<MovingServiceScreen> {
           icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
           title: Text(l.orderPlacedTitle),
           content: Text(
-            '${l.orderPlacedBody(result['id'].toString())}\n${l.orderEta(eta)}',
+            '${l.orderPlacedBody(result!['id'].toString())}\n${l.orderEta(eta)}',
           ),
           actions: [
             TextButton(
@@ -99,6 +112,29 @@ class _MovingServiceScreenState extends State<MovingServiceScreen> {
         ),
       );
     }
+  }
+
+  Future<void> _useCurrentLocation() async {
+    if (_locating) return;
+    setState(() => _locating = true);
+    final resolved = await resolveCurrentLocation();
+    if (!mounted) return;
+    setState(() => _locating = false);
+    if (resolved == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.enableLocationPermission),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    setState(() {
+      location = resolved.address;
+      _lat = resolved.lat;
+      _lng = resolved.lng;
+    });
+    _refreshPrice();
   }
 
   @override
@@ -221,11 +257,20 @@ class _MovingServiceScreenState extends State<MovingServiceScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  onPressed: () => setState(() => location = l.gpsLocation),
-                  child: Text(
-                    l.now,
-                    style: const TextStyle(color: Colors.white),
-                  ),
+                  onPressed: _locating ? null : _useCurrentLocation,
+                  child: _locating
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          l.now,
+                          style: const TextStyle(color: Colors.white),
+                        ),
                 ),
               ),
             ),

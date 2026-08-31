@@ -3,6 +3,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/default_location.dart';
+import '../../../core/utils/phone_utils.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -65,6 +66,7 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
   double? _discountAmount;
   String? _promoCode;
   String _paymentMethod = 'cash';
+  bool _accessibilityRequired = false;
   final List<Map<String, dynamic>> _stops = [];
   bool _splitFareEnabled = false;
   final _splitPhoneCtrl = TextEditingController();
@@ -148,40 +150,53 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
 
   Future<void> _fetchFareEstimate(double lat, double lng) async {
     final pickup = _pickup!;
-    final data = await RiderService.instance.estimateFare(
-      pickupLat: pickup.latitude,
-      pickupLng: pickup.longitude,
-      dropoffLat: lat,
-      dropoffLng: lng,
-      vehicleType: widget.selectedVehicle,
-      promoCode: context.read<PromoProvider>().code,
-      stops: _stops.isEmpty ? null : _stops,
-    );
-    if (!mounted) return;
-
-    final selected = data['selected'] as Map<String, dynamic>? ?? {};
-    final surge = data['surge'] as Map<String, dynamic>?;
-    final promo = data['promo'] as Map<String, dynamic>?;
-
-    setState(() {
-      _distKm = (data['distanceKm'] as num?)?.toDouble();
-      _fare = (selected['fare'] as num?)?.toDouble();
-      _originalFare = (selected['originalFare'] as num?)?.toDouble() ??
-          (promo?['originalFare'] as num?)?.toDouble();
-      _discountAmount = (selected['discountAmount'] as num?)?.toDouble() ??
-          (promo?['discountAmount'] as num?)?.toDouble();
-      _promoCode = promo?['code']?.toString();
-      _surgeMultiplier = (surge?['multiplier'] as num?)?.toDouble() ?? 1.0;
-      _surgeLabel = surge?['zone']?['labelAr']?.toString();
-      _surgeLevel = surge?['level']?.toString();
-      _loading = false;
-    });
-
-    final promoError = data['promoError']?.toString();
-    if (promoError != null && promoError.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(promoError), backgroundColor: Colors.orange),
+    try {
+      final data = await RiderService.instance.estimateFare(
+        pickupLat: pickup.latitude,
+        pickupLng: pickup.longitude,
+        dropoffLat: lat,
+        dropoffLng: lng,
+        vehicleType:
+            _accessibilityRequired ? 'wheelchair_accessible' : widget.selectedVehicle,
+        promoCode: context.read<PromoProvider>().code,
+        stops: _stops.isEmpty ? null : _stops,
       );
+      if (!mounted) return;
+
+      final selected = data['selected'] as Map<String, dynamic>? ?? {};
+      final surge = data['surge'] as Map<String, dynamic>?;
+      final promo = data['promo'] as Map<String, dynamic>?;
+
+      setState(() {
+        _distKm = (data['distanceKm'] as num?)?.toDouble();
+        _fare = (selected['fare'] as num?)?.toDouble();
+        _originalFare = (selected['originalFare'] as num?)?.toDouble() ??
+            (promo?['originalFare'] as num?)?.toDouble();
+        _discountAmount = (selected['discountAmount'] as num?)?.toDouble() ??
+            (promo?['discountAmount'] as num?)?.toDouble();
+        _promoCode = promo?['code']?.toString();
+        _surgeMultiplier = (surge?['multiplier'] as num?)?.toDouble() ?? 1.0;
+        _surgeLabel = surge?['zone']?['labelAr']?.toString();
+        _surgeLevel = surge?['level']?.toString();
+      });
+
+      final promoError = data['promoError']?.toString();
+      if (promoError != null && promoError.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(promoError), backgroundColor: Colors.orange),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _fare = null);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.fareEstimateFailed),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -272,6 +287,17 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
     final pickup = _pickup;
     if (pickup == null || _destLat == null) return;
 
+    if (_splitFareEnabled &&
+        normalizePhoneForTel(_splitPhoneCtrl.text.trim()) == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.splitFarePhoneInvalid),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     if (_surgeMultiplier >= 1.2) {
       final ok = await SurgeBadge.confirmIfHigh(
         context,
@@ -287,7 +313,7 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
     final local = AppLocalizations.of(context)!;
     try {
       final promoCode = context.read<PromoProvider>().code;
-      final accessible = false;
+      final accessible = _accessibilityRequired;
       final market = await MarketService.instance.resolve(
         pickup.latitude,
         pickup.longitude,
@@ -541,12 +567,17 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
                   color: Colors.grey.shade100,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.arrow_back_rounded, size: 18),
+                child: Icon(
+                  Directionality.of(context) == TextDirection.rtl
+                      ? Icons.arrow_forward_rounded
+                      : Icons.arrow_back_rounded,
+                  size: 18,
+                ),
               ),
             ),
             const SizedBox(width: 12),
-            const Text(
-              'تأكيد الرحلة',
+            Text(
+              AppLocalizations.of(context)!.confirmRide,
               style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
             ),
           ],
@@ -682,6 +713,26 @@ class _RiderRequestSheetState extends State<RiderRequestSheet> {
                 ],
               ),
             ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+        A11yButton(
+          label: AppLocalizations.of(context)!.accessibleRide,
+          child: FilterChip(
+            selected: _accessibilityRequired,
+            avatar: Icon(
+              Icons.accessible_rounded,
+              size: 18,
+              color: _accessibilityRequired ? null : Colors.grey.shade700,
+            ),
+            label: Text(AppLocalizations.of(context)!.accessibleRide),
+            onSelected: (v) {
+              setState(() => _accessibilityRequired = v);
+              if (_destLat != null && _destLng != null) {
+                _fetchFareEstimate(_destLat!, _destLng!);
+              }
+            },
           ),
         ),
 

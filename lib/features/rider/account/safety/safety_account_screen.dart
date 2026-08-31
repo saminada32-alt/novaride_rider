@@ -92,7 +92,14 @@ class _SafetyScreenState extends State<SafetyScreen> {
     final phone = _phoneCtrl.text.trim();
     if (phone.isEmpty) return;
     final uri = Uri(scheme: 'tel', path: phone);
-    if (await canLaunchUrl(uri)) await launchUrl(uri);
+    final launched = await canLaunchUrl(uri) && await launchUrl(uri);
+    if (launched || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(AppLocalizations.of(context)!.couldNotPlaceCall(phone)),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   @override

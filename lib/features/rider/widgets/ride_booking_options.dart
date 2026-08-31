@@ -61,6 +61,21 @@ class RideBookingOptions extends StatelessWidget {
             );
           }).toList(),
         ),
+        const SizedBox(height: 8),
+        A11yButton(
+          label: l.accessibleRide,
+          enabled: true,
+          child: FilterChip(
+            selected: accessibilityRequired,
+            avatar: Icon(
+              Icons.accessible_rounded,
+              size: 18,
+              color: accessibilityRequired ? null : Colors.grey.shade700,
+            ),
+            label: Text(l.accessibleRide),
+            onSelected: onAccessibilityChanged,
+          ),
+        ),
         const SizedBox(height: 16),
         A11yHeader(
           label: l.paymentMethodLabel,

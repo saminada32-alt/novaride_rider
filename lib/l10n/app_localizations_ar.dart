@@ -36,6 +36,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get otpSubtitle => 'أدخل رمز التحقق المرسل إلى';
 
   @override
+  String get otpDeliveryHint => 'قد يستغرق وصول الرسالة 10–30 ثانية. إذا لم تصل، اضغط إعادة إرسال.';
+
+  @override
   String get otpHint => 'أدخل الرمز';
 
   @override
@@ -276,6 +279,27 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get shamCash => 'شام كاش';
+
+  @override
+  String get shamCashAccountLabel => 'الحساب';
+
+  @override
+  String get shamCashReferenceLabel => 'الملاحظة';
+
+  @override
+  String get shamCashReferenceFieldLabel => 'رقم مرجع التحويل';
+
+  @override
+  String get shamCashReferenceHint => 'أدخل رقم العملية من شام كاش';
+
+  @override
+  String get shamCashConfirmButton => 'تأكيد التحويل';
+
+  @override
+  String get shamCashReferenceSubmitted => 'تم إرسال رقم المرجع';
+
+  @override
+  String get copiedToClipboard => 'تم النسخ';
 
   @override
   String get enterPromoCode => 'أدخل رمز الخصم';
@@ -1412,6 +1436,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get callEmergencyServices => 'اتصال بالطوارئ (112)';
 
   @override
+  String couldNotPlaceCall(String phone) {
+    return 'تعذّر فتح تطبيق الاتصال. يرجى الاتصال بـ $phone يدوياً.';
+  }
+
+  @override
   String get rideSummary => 'ملخص الرحلة';
 
   @override
@@ -1665,6 +1694,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get splitFarePhone => 'رقم هاتف الصديق';
+
+  @override
+  String get splitFarePhoneInvalid => 'أدخل رقم هاتف صحيح لتقسيم الفاتورة';
 
   @override
   String get splitFarePercent => 'حصته (%)';

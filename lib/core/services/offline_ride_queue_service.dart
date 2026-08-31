@@ -91,6 +91,18 @@ class OfflineRideQueueService extends ChangeNotifier {
     await _persist();
   }
 
+  Future<void> clearAll() async {
+    if (_queue.isEmpty) return;
+    _queue = [];
+    await _persist();
+  }
+
+  Future<void> remove(String id) async {
+    final before = _queue.length;
+    _queue.removeWhere((q) => q.id == id);
+    if (_queue.length != before) await _persist();
+  }
+
   int get scheduledCount =>
       _queue.where((q) => q.isScheduled).length;
 

@@ -239,7 +239,7 @@ class ActiveRideBannerState extends State<ActiveRideBanner>
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    ride.driver?['rating']?.toString() ?? '5.0',
+                                    ride.driver?['rating']?.toString() ?? '—',
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: Colors.grey[600],

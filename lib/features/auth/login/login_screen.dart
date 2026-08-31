@@ -162,7 +162,12 @@ class _LoginScreenState extends State<LoginScreen>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+                          icon: Icon(
+                            isAr
+                                ? Icons.arrow_forward_ios
+                                : Icons.arrow_back_ios_new,
+                            size: 20,
+                          ),
                           color: Colors.black87,
                           onPressed: () => Navigator.pop(context),
                         ),

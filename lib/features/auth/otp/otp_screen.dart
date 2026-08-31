@@ -8,7 +8,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../core/services/legal_service.dart';
 import '../../../core/utils/auth_error_messages.dart';
 import '../providers/auth_provider.dart';
-import '../navigation/rider_onboarding_router.dart';
+import '../intro/intro_screen.dart';
 import '../profile_setup/profile_setup_screen.dart';
 import '../../rider/home/rider_home_screen.dart';
 
@@ -106,24 +106,15 @@ class _OtpScreenState extends State<OtpScreen> {
 
     if (widget.isLogin) {
       final passenger = prov.passenger;
-      if (passenger != null && !passenger.profileCompleted) {
-        unawaited(
-          RiderOnboardingRouter.resumeIncomplete(
-            context,
-            profileCompleted: false,
-          ),
-        );
-        return;
-      }
+      final dest = passenger != null && !passenger.profileCompleted
+          ? const IntroScreen()
+          : const RiderHomeScreen();
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const RiderHomeScreen()),
+        MaterialPageRoute(builder: (_) => dest),
         (_) => false,
       );
     } else {
-      unawaited(
-        RiderOnboardingRouter.saveStep(RiderOnboardingStep.profileSetup),
-      );
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
@@ -214,7 +205,7 @@ class _OtpScreenState extends State<OtpScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'قد يستغرق وصول الرسالة 10–30 ثانية. إذا لم تصل، اضغط إعادة إرسال.',
+                local.otpDeliveryHint,
                 style: TextStyle(color: Colors.grey[500], fontSize: 13, height: 1.4),
               ),
               const SizedBox(height: 32),

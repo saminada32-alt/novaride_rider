@@ -36,6 +36,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get otpSubtitle => 'Enter the code sent to';
 
   @override
+  String get otpDeliveryHint => 'The message may take 10–30 seconds to arrive. If it doesn\'t, tap resend.';
+
+  @override
   String get otpHint => 'Enter code';
 
   @override
@@ -276,6 +279,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shamCash => 'Sham Cash';
+
+  @override
+  String get shamCashAccountLabel => 'Account';
+
+  @override
+  String get shamCashReferenceLabel => 'Reference note';
+
+  @override
+  String get shamCashReferenceFieldLabel => 'Transfer reference number';
+
+  @override
+  String get shamCashReferenceHint => 'Enter the transaction number from Sham Cash';
+
+  @override
+  String get shamCashConfirmButton => 'Confirm transfer';
+
+  @override
+  String get shamCashReferenceSubmitted => 'Reference number submitted';
+
+  @override
+  String get copiedToClipboard => 'Copied';
 
   @override
   String get enterPromoCode => 'Enter promo code';
@@ -1412,6 +1436,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get callEmergencyServices => 'Call emergency (112)';
 
   @override
+  String couldNotPlaceCall(String phone) {
+    return 'Couldn\'t open the dialer. Please call $phone manually.';
+  }
+
+  @override
   String get rideSummary => 'Ride Summary';
 
   @override
@@ -1665,6 +1694,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get splitFarePhone => 'Friend\'s phone number';
+
+  @override
+  String get splitFarePhoneInvalid => 'Enter a valid phone number to split the fare';
 
   @override
   String get splitFarePercent => 'Their share (%)';

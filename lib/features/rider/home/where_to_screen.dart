@@ -117,12 +117,13 @@ class _WhereToScreenState extends State<WhereToScreen> {
     setState(() => _busy = true);
     try {
       final anchor = widget.pickupLocation ?? AppDefaultLocation.damascus;
+      final lang = Localizations.localeOf(context).languageCode;
       final res = await http
           .get(
             Uri.parse(
               'https://maps.googleapis.com/maps/api/place/autocomplete/json'
               '?input=${Uri.encodeComponent(q)}'
-              '&language=ar&location=${anchor.latitude},${anchor.longitude}'
+              '&language=$lang&location=${anchor.latitude},${anchor.longitude}'
               '&radius=100000'
               '&key=${GoogleMapsConfig.apiKey}',
             ),
@@ -204,12 +205,13 @@ class _WhereToScreenState extends State<WhereToScreen> {
 
     setState(() => _busy = true);
     try {
+      final lang = Localizations.localeOf(context).languageCode;
       final res = await http
           .get(
             Uri.parse(
               'https://maps.googleapis.com/maps/api/geocode/json'
               '?address=${Uri.encodeComponent(address)}'
-              '&language=ar&key=${GoogleMapsConfig.apiKey}',
+              '&language=$lang&key=${GoogleMapsConfig.apiKey}',
             ),
           )
           .timeout(const Duration(seconds: 8));

@@ -149,6 +149,12 @@ abstract class AppLocalizations {
   /// **'Enter the code sent to'**
   String get otpSubtitle;
 
+  /// No description provided for @otpDeliveryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The message may take 10–30 seconds to arrive. If it doesn\'t, tap resend.'**
+  String get otpDeliveryHint;
+
   /// No description provided for @otpHint.
   ///
   /// In en, this message translates to:
@@ -628,6 +634,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sham Cash'**
   String get shamCash;
+
+  /// No description provided for @shamCashAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get shamCashAccountLabel;
+
+  /// No description provided for @shamCashReferenceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference note'**
+  String get shamCashReferenceLabel;
+
+  /// No description provided for @shamCashReferenceFieldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer reference number'**
+  String get shamCashReferenceFieldLabel;
+
+  /// No description provided for @shamCashReferenceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the transaction number from Sham Cash'**
+  String get shamCashReferenceHint;
+
+  /// No description provided for @shamCashConfirmButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm transfer'**
+  String get shamCashConfirmButton;
+
+  /// No description provided for @shamCashReferenceSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference number submitted'**
+  String get shamCashReferenceSubmitted;
+
+  /// No description provided for @copiedToClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get copiedToClipboard;
 
   /// No description provided for @enterPromoCode.
   ///
@@ -2897,6 +2945,12 @@ abstract class AppLocalizations {
   /// **'Call emergency (112)'**
   String get callEmergencyServices;
 
+  /// No description provided for @couldNotPlaceCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the dialer. Please call {phone} manually.'**
+  String couldNotPlaceCall(String phone);
+
   /// No description provided for @rideSummary.
   ///
   /// In en, this message translates to:
@@ -3382,6 +3436,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Friend\'s phone number'**
   String get splitFarePhone;
+
+  /// No description provided for @splitFarePhoneInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid phone number to split the fare'**
+  String get splitFarePhoneInvalid;
 
   /// No description provided for @splitFarePercent.
   ///

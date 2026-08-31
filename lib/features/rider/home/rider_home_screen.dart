@@ -11,6 +11,7 @@ import '../../../core/constants/default_location.dart';
 import '../../../core/services/directions_service.dart';
 import '../../../core/widgets/legal_consent_dialog.dart';
 import '../../../core/widgets/a11y.dart';
+import '../../../core/utils/api_error_messages.dart';
 import '../../../core/utils/map_icons.dart';
 import '../../../core/utils/phone_utils.dart';
 import '../../../l10n/app_localizations.dart';
@@ -70,9 +71,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
   bool _fetchingDirections = false;
   BitmapDescriptor? _carIcon;
   double _driverBearing = 0;
+  int? _liveEtaMinutes;
   List<Map<String, dynamic>> _nearbyDrivers = [];
   int? _joinedTripId;
-  bool _audioRecording = false;
   final DraggableScrollableController _activeSheetController =
       DraggableScrollableController();
   final DraggableScrollableController _homeSheetController =
@@ -326,6 +327,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
       _activeRide = null;
       _driverPosition = null;
       _driverBearing = 0;
+      _liveEtaMinutes = null;
       _routeCoords = [];
       _polylines = {};
       _markers = {};
@@ -895,7 +897,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
     }
     _driverPosition = next;
     if (live['etaMinutes'] != null && _activeRide != null) {
-      // ETA refreshed from traffic-aware backend
+      _liveEtaMinutes = int.tryParse(live['etaMinutes'].toString());
     }
   }
 
@@ -1052,7 +1054,10 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(localizeApiError(e.toString(), local)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -1087,7 +1092,10 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(localizeApiError(e.toString(), local)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -1150,7 +1158,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
                     _loadNearbyDrivers();
                   }
                 },
-                myLocationEnabled: false,
+                myLocationEnabled: true,
                 myLocationButtonEnabled: false,
                 zoomControlsEnabled: false,
                 mapToolbarEnabled: false,
@@ -1259,9 +1267,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen>
                     scrollController: scrollController,
                     ride: activeRide,
                     t: local,
-                    audioRecording: _audioRecording,
-                    onToggleAudio: () =>
-                        setState(() => _audioRecording = !_audioRecording),
+                    liveEtaMinutes: _liveEtaMinutes,
                     onRefresh: _checkActiveRide,
                     onCancel: _cancelActiveRide,
                     onSafety: () => showRideSafetySheet(

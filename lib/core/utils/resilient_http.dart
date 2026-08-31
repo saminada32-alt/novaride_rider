@@ -39,7 +39,7 @@ class ResilientHttp {
     );
   }
 
-  /// OTP send: API returns immediately; SMS is sent on the server in background.
+  /// OTP send — same as app-release.apk-3 (fast synchronous API).
   static Future<http.Response> authSendPost(
     Uri uri, {
     Map<String, String>? headers,

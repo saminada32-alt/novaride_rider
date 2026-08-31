@@ -44,9 +44,19 @@ class _RideSafetySheetState extends State<_RideSafetySheet> {
   }
 
   Future<void> _callUri(Uri uri) async {
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
+    final launched =
+        await canLaunchUrl(uri) && await launchUrl(uri);
+    if (launched || !mounted) return;
+    // Silently doing nothing here is dangerous in an emergency context —
+    // the rider must know the call didn't go through so they can dial
+    // manually instead of assuming help is on the way.
+    final local = AppLocalizations.of(context)!;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(local.couldNotPlaceCall(uri.path)),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   Future<void> _sos() async {

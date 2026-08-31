@@ -1,12 +1,13 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import '../../core/widgets/a11y.dart';
+import '../../core/utils/session_cache.dart';
 import '../../l10n/app_localizations.dart';
 import '../auth/providers/auth_provider.dart';
 import '../auth/welcome/welcome_screen.dart';
-import '../auth/navigation/rider_onboarding_router.dart';
+import '../auth/intro/intro_screen.dart';
 import '../rider/home/rider_home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -17,6 +18,8 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
+  static const _storage = FlutterSecureStorage();
+
   late AnimationController _ctrl;
   late Animation<double> _fade;
 
@@ -48,12 +51,7 @@ class _SplashScreenState extends State<SplashScreen>
           _go(const RiderHomeScreen(), fast: true);
           break;
         case RiderStatus.newUser:
-          unawaited(
-            RiderOnboardingRouter.resumeIncomplete(
-              context,
-              profileCompleted: false,
-            ),
-          );
+          _go(const IntroScreen());
           break;
         case RiderStatus.notLoggedIn:
           _go(const WelcomeScreen());
@@ -62,16 +60,16 @@ class _SplashScreenState extends State<SplashScreen>
     } catch (e, st) {
       debugPrint('Splash check failed: $e\n$st');
       if (!mounted) return;
-      final tok = context.read<AuthProvider>().token;
+      final tok =
+          context.read<AuthProvider>().token ??
+          await _storage.read(key: 'passenger_token');
       if (tok != null) {
-        unawaited(
-          RiderOnboardingRouter.resumeIncomplete(
-            context,
-            profileCompleted:
-                context.read<AuthProvider>().passenger?.profileCompleted ??
-                false,
-          ),
-        );
+        final completed = await SessionCache.loadRiderProfileCompleted();
+        if (completed == true) {
+          _go(const RiderHomeScreen(), fast: true);
+        } else {
+          _go(const IntroScreen());
+        }
       } else {
         _go(const WelcomeScreen());
       }

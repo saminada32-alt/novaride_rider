@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../../../core/constants/default_location.dart';
@@ -46,6 +47,8 @@ class _ScheduleRideScreenState extends State<ScheduleRideScreen>
   bool _accessibilityRequired = false;
   bool _mapExpanded = false;
   bool _selectingOnMap = false; // وضع الاختيار من الخريطة
+  bool _geocodingHome = false;
+  bool _geocodingWork = false;
 
   // تقدير السعر (يُحسب عند توفّر الوجهة + الموعد)
   Map<String, dynamic>? _estimate;
@@ -186,10 +189,11 @@ class _ScheduleRideScreenState extends State<ScheduleRideScreen>
   // ─── Reverse Geocode ──────────────────────────────────────────
   Future<void> _reverseGeocode(LatLng pos, {required bool isPickup}) async {
     try {
+      final lang = Localizations.localeOf(context).languageCode;
       final url = Uri.parse(
         'https://maps.googleapis.com/maps/api/geocode/json'
         '?latlng=${pos.latitude},${pos.longitude}'
-        '&language=ar&key=${GoogleMapsConfig.apiKey}',
+        '&language=$lang&key=${GoogleMapsConfig.apiKey}',
       );
       final res = await http.get(url).timeout(const Duration(seconds: 8));
       final data = jsonDecode(res.body);
@@ -207,6 +211,53 @@ class _ScheduleRideScreenState extends State<ScheduleRideScreen>
     } catch (_) {}
   }
 
+  // ─── Saved address (Home/Work) pickup shortcut ────────────────
+  // The Passenger model only stores homeAddress/workAddress as plain text
+  // (no coordinates — see PassengerModel), so selecting either one must
+  // geocode it before it's usable as a real pickup point. This mirrors the
+  // fallback geocoding already used for saved places in rider_request_sheet
+  // and where_to_screen; without it, the ride would be booked at whatever
+  // pickup lat/lng happened to be set previously (e.g. current location),
+  // completely mismatched with the "Home"/"Work" label shown to the rider.
+  Future<void> _selectSavedAddress({
+    required String address,
+    required String label,
+    required bool isHome,
+  }) async {
+    if (_geocodingHome || _geocodingWork) return;
+    setState(() {
+      if (isHome) {
+        _geocodingHome = true;
+      } else {
+        _geocodingWork = true;
+      }
+    });
+
+    final local = AppLocalizations.of(context)!;
+    try {
+      final results = await locationFromAddress(address);
+      if (!mounted) return;
+      if (results.isEmpty) {
+        _snack(local.locationPickFor(label), Colors.red);
+        return;
+      }
+      setState(() {
+        _pickupLatLng = LatLng(results.first.latitude, results.first.longitude);
+        _pickupAddress = address;
+      });
+      _fetchEstimate();
+    } catch (_) {
+      if (mounted) _snack(local.locationPickFor(label), Colors.red);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _geocodingHome = false;
+          _geocodingWork = false;
+        });
+      }
+    }
+  }
+
   // ─── Places Autocomplete ──────────────────────────────────────
   Future<void> _search(String q) async {
     if (q.length < 2) {
@@ -221,10 +272,11 @@ class _ScheduleRideScreenState extends State<ScheduleRideScreen>
           ? '&location=${loc.latitude},${loc.longitude}&radius=50000'
           : '';
 
+      final lang = Localizations.localeOf(context).languageCode;
       final url = Uri.parse(
         'https://maps.googleapis.com/maps/api/place/autocomplete/json'
         '?input=${Uri.encodeComponent(q)}'
-        '&language=ar'
+        '&language=$lang'
         '$locBias'
         '&key=${GoogleMapsConfig.apiKey}',
       );
@@ -649,6 +701,8 @@ class _ScheduleRideScreenState extends State<ScheduleRideScreen>
                   : _pickupAddress,
               homeAddress: user?.homeAddress,
               workAddress: user?.workAddress,
+              homeLoading: _geocodingHome,
+              workLoading: _geocodingWork,
               onCurrentLocation: () {
                 setState(() {
                   _pickupLatLng = _currentLatLng;
@@ -657,16 +711,21 @@ class _ScheduleRideScreenState extends State<ScheduleRideScreen>
                 if (_currentLatLng != null) {
                   _reverseGeocode(_currentLatLng!, isPickup: true);
                 }
+                _fetchEstimate();
               },
-              onHome: user?.homeAddress != null
-                  ? () => setState(() {
-                      _pickupAddress = user!.homeAddress!;
-                    })
+              onHome: (user?.homeAddress != null && !_geocodingWork)
+                  ? () => _selectSavedAddress(
+                      address: user!.homeAddress!,
+                      label: local.home,
+                      isHome: true,
+                    )
                   : null,
-              onWork: user?.workAddress != null
-                  ? () => setState(() {
-                      _pickupAddress = user!.workAddress!;
-                    })
+              onWork: (user?.workAddress != null && !_geocodingHome)
+                  ? () => _selectSavedAddress(
+                      address: user!.workAddress!,
+                      label: local.work,
+                      isHome: false,
+                    )
                   : null,
             ),
 
@@ -1386,6 +1445,8 @@ class _PickupCard extends StatelessWidget {
   final String? currentAddress;
   final String? homeAddress;
   final String? workAddress;
+  final bool homeLoading;
+  final bool workLoading;
   final VoidCallback onCurrentLocation;
   final VoidCallback? onHome;
   final VoidCallback? onWork;
@@ -1395,6 +1456,8 @@ class _PickupCard extends StatelessWidget {
     this.currentAddress,
     this.homeAddress,
     this.workAddress,
+    this.homeLoading = false,
+    this.workLoading = false,
     required this.onCurrentLocation,
     this.onHome,
     this.onWork,
@@ -1428,7 +1491,8 @@ class _PickupCard extends StatelessWidget {
               title: 'Home',
               subtitle: homeAddress!,
               selected: selected == homeAddress,
-              onTap: onHome!,
+              loading: homeLoading,
+              onTap: onHome,
             ),
           ],
           if (workAddress != null) ...[
@@ -1439,7 +1503,8 @@ class _PickupCard extends StatelessWidget {
               title: 'Work',
               subtitle: workAddress!,
               selected: selected == workAddress,
-              onTap: onWork!,
+              loading: workLoading,
+              onTap: onWork,
             ),
           ],
         ],
@@ -1453,7 +1518,8 @@ class _Option extends StatelessWidget {
   final Color iconColor;
   final String title, subtitle;
   final bool selected;
-  final VoidCallback onTap;
+  final bool loading;
+  final VoidCallback? onTap;
 
   const _Option({
     required this.icon,
@@ -1461,12 +1527,13 @@ class _Option extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.selected,
+    this.loading = false,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) => InkWell(
-    onTap: onTap,
+    onTap: loading ? null : onTap,
     borderRadius: BorderRadius.circular(18),
     child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -1478,7 +1545,16 @@ class _Option extends StatelessWidget {
               color: iconColor.withOpacity(.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: iconColor, size: 18),
+            child: loading
+                ? SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: iconColor,
+                    ),
+                  )
+                : Icon(icon, color: iconColor, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(

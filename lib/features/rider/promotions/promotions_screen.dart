@@ -21,6 +21,7 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
   final _codeCtrl = TextEditingController();
   List<dynamic> _promos = [];
   bool _loading = false;
+  bool _loadError = false;
   bool _applying = false;
   String? _applyError;
 
@@ -37,9 +38,19 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
   }
 
   Future<void> _loadPromos() async {
-    setState(() => _loading = true);
-    _promos = await RiderService.instance.getPromotions();
-    if (mounted) setState(() => _loading = false);
+    setState(() {
+      _loading = true;
+      _loadError = false;
+    });
+    try {
+      final promos = await RiderService.instance.getPromotions();
+      if (!mounted) return;
+      setState(() => _promos = promos);
+    } catch (_) {
+      if (mounted) setState(() => _loadError = true);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _applyCode([String? preset]) async {
@@ -211,7 +222,10 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
             else if (_promos.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
-                child: _EmptyState(message: local.noData),
+                child: _EmptyState(
+                  message: _loadError ? local.failedToLoad : local.noData,
+                  isError: _loadError,
+                ),
               )
             else
               SliverPadding(
@@ -747,8 +761,9 @@ class _MetaChip extends StatelessWidget {
 
 class _EmptyState extends StatelessWidget {
   final String message;
+  final bool isError;
 
-  const _EmptyState({required this.message});
+  const _EmptyState({required this.message, this.isError = false});
 
   @override
   Widget build(BuildContext context) {
@@ -772,7 +787,7 @@ class _EmptyState extends StatelessWidget {
                 ],
               ),
               child: Icon(
-                Icons.local_offer_outlined,
+                isError ? Icons.cloud_off_rounded : Icons.local_offer_outlined,
                 size: 36,
                 color: Colors.grey.shade400,
               ),

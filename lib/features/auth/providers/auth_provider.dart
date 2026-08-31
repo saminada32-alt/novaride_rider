@@ -43,14 +43,24 @@ class AuthProvider extends ChangeNotifier {
   bool get isAccountNotFound => _error == authErrAccountNotFound;
 
   // ─── فحص الحالة عند فتح التطبيق ──────────────────────────
+  // Fast path first: on Syria's networks a single sessionGet attempt can
+  // take up to 25s, times 3 retries — the splash screen must never make a
+  // returning user stare at a spinner for a minute when we already know
+  // their status from last time. If a cached answer exists, decide the
+  // navigation immediately and verify with the server silently afterward;
+  // only block on the network when there's truly nothing cached yet.
   Future<RiderStatus> checkStatus() async {
-    String? tok;
+    final tok = await _storage.read(key: 'passenger_token');
+    if (tok == null) return RiderStatus.notLoggedIn;
+    _token = tok;
+
+    final cachedCompleted = await SessionCache.loadRiderProfileCompleted();
+    if (cachedCompleted != null) {
+      unawaited(_refreshRiderInBackground(tok));
+      return cachedCompleted ? RiderStatus.returning : RiderStatus.newUser;
+    }
+
     try {
-      tok = await _storage.read(key: 'passenger_token');
-      if (tok == null) return RiderStatus.notLoggedIn;
-
-      _token = tok;
-
       final res = await ResilientHttp.sessionGet(
         Uri.parse('${Api.base}${Api.passengerMe}'),
         headers: {..._h, 'Authorization': 'Bearer $tok'},
@@ -75,19 +85,13 @@ class AuthProvider extends ChangeNotifier {
             : RiderStatus.newUser;
       }
 
-      if (tok.isNotEmpty) {
-        final status = await _statusFromCache(fallback: RiderStatus.returning);
-        unawaited(_refreshRiderInBackground(tok));
-        return status;
-      }
-      return RiderStatus.notLoggedIn;
+      final status = await _statusFromCache(fallback: RiderStatus.returning);
+      unawaited(_refreshRiderInBackground(tok));
+      return status;
     } catch (_) {
-      if (tok != null) {
-        final status = await _statusFromCache(fallback: RiderStatus.returning);
-        unawaited(_refreshRiderInBackground(tok));
-        return status;
-      }
-      return RiderStatus.notLoggedIn;
+      final status = await _statusFromCache(fallback: RiderStatus.returning);
+      unawaited(_refreshRiderInBackground(tok));
+      return status;
     }
   }
 
@@ -97,6 +101,12 @@ class AuthProvider extends ChangeNotifier {
         Uri.parse('${Api.base}${Api.passengerMe}'),
         headers: {..._h, 'Authorization': 'Bearer $tok'},
       );
+      if (res.statusCode == 401) {
+        // Token was revoked/expired server-side — don't leave the app
+        // silently "logged in" off a stale cache until the user notices.
+        await logout();
+        return;
+      }
       if (res.statusCode != 200) return;
       _passenger = PassengerModel.fromJson(
         jsonDecode(utf8.decode(res.bodyBytes)),

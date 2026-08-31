@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/utils/api_error_messages.dart';
 import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -84,7 +85,12 @@ class _RideChatScreenState extends State<RideChatScreen> {
       if (!mounted) return;
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(
+            localizeApiError(e.toString(), AppLocalizations.of(context)!),
+          ),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -106,7 +112,12 @@ class _RideChatScreenState extends State<RideChatScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          SnackBar(
+          content: Text(
+            localizeApiError(e.toString(), AppLocalizations.of(context)!),
+          ),
+          backgroundColor: Colors.red,
+        ),
         );
       }
     } finally {

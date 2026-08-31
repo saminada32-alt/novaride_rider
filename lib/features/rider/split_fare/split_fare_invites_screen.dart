@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/api_error_messages.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../../core/widgets/a11y.dart';
 import '../../../l10n/app_localizations.dart';
@@ -50,7 +51,12 @@ class _SplitFareInvitesScreenState extends State<SplitFareInvitesScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(
+              localizeApiError(e.toString(), AppLocalizations.of(context)!),
+            ),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -63,7 +69,12 @@ class _SplitFareInvitesScreenState extends State<SplitFareInvitesScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(
+              localizeApiError(e.toString(), AppLocalizations.of(context)!),
+            ),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }

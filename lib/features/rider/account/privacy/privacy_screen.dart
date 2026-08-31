@@ -150,7 +150,6 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
       final data = await RiderService.instance.exportPersonalData();
       final json = const JsonEncoder.withIndent('  ').convert(data);
       if (!mounted) return;
-      Navigator.pop(context);
       await Share.share(json, subject: 'NovaRide — ${l.downloadYourData}');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

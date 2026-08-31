@@ -225,8 +225,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             color: Colors.white.withOpacity(0.18),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            Icons.arrow_back_ios_new_rounded,
+                          child: Icon(
+                            isAr
+                                ? Icons.arrow_forward_ios_rounded
+                                : Icons.arrow_back_ios_new_rounded,
                             color: Colors.white,
                           ),
                         ),

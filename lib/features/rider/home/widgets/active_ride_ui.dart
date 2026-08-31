@@ -9,10 +9,13 @@ class RiderActiveRideUi {
   RiderActiveRideUi._();
 
   static const Color _uberBlack = Color(0xFF000000);
-  static const Color _safetyBlue = Color(0xFFE8F4FD);
 
-  static String etaHeroText(RideModel ride, AppLocalizations t) {
-    final minutes = ride.etaMinutes ?? 0;
+  static String etaHeroText(
+    RideModel ride,
+    AppLocalizations t, {
+    int? liveEtaMinutes,
+  }) {
+    final minutes = liveEtaMinutes ?? ride.etaMinutes ?? 0;
     switch (ride.status) {
       case RideStatus.searching:
         return t.findYourDriver;
@@ -101,55 +104,6 @@ class RiderActiveRideUi {
                 ),
               ),
           ],
-        ),
-      );
-
-  static Widget safetyAudioCard({
-    required AppLocalizations t,
-    required bool recording,
-    required VoidCallback onToggle,
-  }) =>
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: _safetyBlue,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                recording ? Icons.mic_rounded : Icons.mic_none_rounded,
-                color: recording ? Colors.red.shade700 : Colors.blue.shade800,
-                size: 22,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  recording ? t.safetyRecording : t.safetyRecordAudio,
-                  style: TextStyle(
-                    color: Colors.blue.shade900,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: onToggle,
-                style: TextButton.styleFrom(
-                  foregroundColor: recording ? Colors.red : Colors.blue.shade900,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                ),
-                child: Text(
-                  recording ? '■' : t.safetyRecordStart,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
         ),
       );
 

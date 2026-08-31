@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/utils/api_error_messages.dart';
 import '../../../core/utils/currency_utils.dart';
 import 'referral_service.dart';
 
@@ -31,7 +32,11 @@ class _ReferralScreenState extends State<ReferralScreen> {
       if (mounted) {
         setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(
+            content: Text(
+              localizeApiError(e.toString(), AppLocalizations.of(context)!),
+            ),
+          ),
         );
       }
     }
@@ -92,8 +97,14 @@ class _ReferralScreenState extends State<ReferralScreen> {
                   const SizedBox(height: 12),
                   FilledButton(
                     onPressed: () async {
+                      if (_applyCtrl.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(l.requiredField)),
+                        );
+                        return;
+                      }
                       try {
-                        await ReferralService.instance.applyCode(_applyCtrl.text);
+                        await ReferralService.instance.applyCode(_applyCtrl.text.trim());
                         if (!mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text(l.referralApplied)),
@@ -103,7 +114,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                       } catch (e) {
                         if (!mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(e.toString())),
+                          SnackBar(content: Text(localizeApiError(e.toString(), l))),
                         );
                       }
                     },

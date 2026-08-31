@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -25,20 +24,14 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(_initServices());
+      unawaited(CrashReporting.init());
+      NotificationInboxService.instance.loadCache();
+      Future.delayed(const Duration(seconds: 1), () {
+        if (!mounted) return;
+        unawaited(RiderFcmService.instance.init());
+        unawaited(NotificationInboxService.instance.loadFromApi());
+      });
     });
-  }
-
-  Future<void> _initServices() async {
-    NotificationInboxService.instance.loadCache();
-    try {
-      await RiderFcmService.instance.init();
-    } catch (e, st) {
-      debugPrint('Rider FCM init failed: $e');
-      unawaited(CrashReporting.recordError(e, st));
-    }
-    if (!mounted) return;
-    unawaited(NotificationInboxService.instance.loadFromApi());
   }
 
   @override

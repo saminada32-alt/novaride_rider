@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../core/utils/session_cache.dart';
-import '../auth/profile_setup/profile_setup_screen.dart';
-import '../auth/intro/intro_screen.dart';
-import '../rider/home/rider_home_screen.dart';
+import 'package:novaride_rider/core/utils/session_cache.dart';
+import 'package:novaride_rider/features/auth/profile_setup/profile_setup_screen.dart';
+import 'package:novaride_rider/features/auth/intro/intro_screen.dart';
+import 'package:novaride_rider/features/rider/home/rider_home_screen.dart';
 
 enum RiderOnboardingStep {
   profileSetup,
@@ -31,11 +31,13 @@ class RiderOnboardingRouter {
   }) async {
     if (!profileCompleted) {
       await saveStep(RiderOnboardingStep.profileSetup);
+      if (!context.mounted) return;
       _replace(context, const ProfileSetupScreen());
       return;
     }
 
     final cached = await _loadStep();
+    if (!context.mounted) return;
     if (cached == RiderOnboardingStep.intro) {
       _replace(context, const IntroScreen());
       return;
